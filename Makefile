@@ -58,6 +58,7 @@ $(OUT_FILE): $(PCH_OUT) $(OBJS) $(INCLUDES)
 compile-shaders: $(SHADER_VERT_OUT) $(SHADER_FRAG_OUT)
 
 $(PCH_OUT): $(PCH_SRC)
+	@mkdir -p $(@D)
 	@$(CC) $(CCFLAGS) $(INCLUDE_DIRS) $^ -o $@
 	@echo "Recompiled PCH!"
 	
