@@ -48,7 +48,7 @@
 #ifdef DEBUG
 #define ON_DEBUG(expr) expr
 #else
-#define ON_DEBUG()
+#define ON_DEBUG(expr)
 #endif
 
 #pragma endregion
