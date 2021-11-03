@@ -1,0 +1,26 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"name": "test game",
+			"path": "./test-game"
+		}
+	],
+	"settings": {
+		"files.exclude": {
+			"**/.git": true,
+			"**/.svn": true,
+			"**/.hg": true,
+			"**/CVS": true,
+			"**/.DS_Store": true,
+			"**/Thumbs.db": true,
+			".vscode": true,
+			"out": true,
+			"test-game-build": true,
+			"test-game": true,
+			"nova-engine.code-workspace": true
+		}
+	}
+}
