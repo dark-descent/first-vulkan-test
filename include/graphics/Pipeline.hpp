@@ -2,6 +2,8 @@
 #define ENGINE_GRAHICS_PIPELINE_HPP
 
 #include "AbstractObject.hpp"
+#include "Engine.hpp"
+#include "framework.hpp"
 
 namespace NovaEngine::Graphics 
 {
@@ -14,7 +16,11 @@ namespace NovaEngine::Graphics
 			bool onTerminate();
 
 		private:
-			Pipeline();
+			Context* context_;
+			Pipeline(Context*);
+
+		public:
+			VkShaderModule createShaderModule(const char* file);
 
 		friend class Context;
 	};

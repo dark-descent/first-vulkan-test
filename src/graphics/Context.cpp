@@ -1,6 +1,7 @@
 #include "graphics/Context.hpp"
 #include "ConfigManager.hpp"
 #include "framework.hpp"
+#include "GraphicsManager.hpp"
 
 namespace NovaEngine::Graphics
 {
@@ -89,7 +90,7 @@ namespace NovaEngine::Graphics
 	}
 
 
-	Context::Context() :
+	Context::Context(GraphicsManager* graphicsManager) :
 		instance_(VK_NULL_HANDLE),
 		surface_(VK_NULL_HANDLE),
 		physicalDevice_(),
@@ -97,11 +98,14 @@ namespace NovaEngine::Graphics
 		graphicsQueue_(VK_NULL_HANDLE),
 		presentQueue_(VK_NULL_HANDLE),
 		swapChain_(),
-		pipeline_()
+		renderPass_(VK_NULL_HANDLE),
+		pipeline_(this),
+		graphicsManager_(graphicsManager)
 	{
-		
+
 	}
 
+	GraphicsManager* Context::graphicsManager() { return graphicsManager_; }
 
 	bool Context::onInitialize(const char* gameName, GLFWwindow* window, ValidationLayers validationLayers, DeviceExtensions deviceExtensions)
 	{
@@ -113,6 +117,7 @@ namespace NovaEngine::Graphics
 		CHECK_OR_RETURN(physicalDevice_.initialize(instance_, surface_, deviceExtensions), "Could not create physical device!");
 		CHECK_OR_RETURN(createLogicalDeviceAndQueues(validationLayers, deviceExtensions), "Failed to create logical device!");
 		CHECK_OR_RETURN(swapChain_.initialize(window, surface_, *physicalDevice_, logicalDevice_), "Failed to create swapchain!");
+		CHECK_OR_RETURN(createRenderPass(), "Fauled to create the render pass!");
 		CHECK_OR_RETURN(pipeline_.initialize(), "Failed to create the pipeline!");
 		return true;
 	}
@@ -122,6 +127,7 @@ namespace NovaEngine::Graphics
 		ON_DEBUG(destroyDebugEnvironment());
 
 		pipeline_.terminate();
+		vkDestroyRenderPass(logicalDevice_, renderPass_, nullptr);
 		swapChain_.terminate();
 		physicalDevice_.terminate();
 		vkDestroyDevice(logicalDevice_, VK_NULL_HANDLE);
@@ -264,4 +270,36 @@ namespace NovaEngine::Graphics
 		return false;
 	}
 #endif
+
+	bool Context::createRenderPass()
+	{
+		VkAttachmentDescription colorAttachment = {};
+		colorAttachment.format = swapChain_.imageFormat_;
+		colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+		colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+		VkAttachmentReference colorAttachmentRef = {};
+		colorAttachmentRef.attachment = 0;
+		colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+		VkSubpassDescription subpass = {};
+		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+
+		subpass.colorAttachmentCount = 1;
+		subpass.pColorAttachments = &colorAttachmentRef;
+
+		VkRenderPassCreateInfo renderPassInfo = {};
+		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+		renderPassInfo.attachmentCount = 1;
+		renderPassInfo.pAttachments = &colorAttachment;
+		renderPassInfo.subpassCount = 1;
+		renderPassInfo.pSubpasses = &subpass;
+
+		return vkCreateRenderPass(logicalDevice_, &renderPassInfo, nullptr, &renderPass_) == VK_SUCCESS;
+	}
 };

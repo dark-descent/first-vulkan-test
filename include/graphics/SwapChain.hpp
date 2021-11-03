@@ -41,6 +41,7 @@ namespace NovaEngine::Graphics
 		SwapChain();
 
 		friend class Context;
+		friend class Pipeline;
 	};
 };
 
