@@ -45,6 +45,7 @@ SHADER_FRAG_OUT = $(patsubst %.frag,out/assets/%.frag.spv,$(SHADER_FRAG_SRCS))
 test-game: $(OUT_FILE) compile-shaders test-game-scripts
 	@mkdir -p $(TEST_GAME_OUT)
 	@cp $(OUT_FILE) $(TEST_GAME_OUT)/$(ENGINE_NAME)
+	@rm -rf $(TEST_GAME_OUT)/assets
 	@cp -a $(OUT_DIR)/assets $(TEST_GAME_OUT)/assets
 
 $(OUT_FILE): $(PCH_OUT) $(OBJS) $(INCLUDES)

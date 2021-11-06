@@ -1,8 +1,5 @@
 #include "Engine.hpp"
 #include "Logger.hpp"
-
-#include <signal.h>
-
 #define CHECK_REJECT(subSystem, rejector, msg) if(!subSystem) { rejector(msg); printf(msg); return false; }
 
 namespace NovaEngine
@@ -118,7 +115,7 @@ namespace NovaEngine
 	Engine::Engine() : AbstractObject(), isRunning_(false), assetManager(this), scriptManager(this), configManager(this), graphicsManager(this), gameWindow(this)
 	{
 		if (engineInstances_.size() == 0)
-			signal(SIGABRT, &onAbortHandler);
+			std::signal(SIGABRT, &onAbortHandler);
 		engineInstances_.push_back(this);
 	}
 

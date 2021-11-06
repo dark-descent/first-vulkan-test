@@ -8,7 +8,6 @@
 #include <iostream>
 #include <memory>
 #include <sstream>
-#include <iostream>
 #include <fstream>
 #include <string>
 #include <string.h>
@@ -24,6 +23,9 @@
 #include <mutex>
 #include <condition_variable>
 #include <queue>
+#include <csignal>
+#include <cstdlib>
+#include <stdlib.h>
 
 #include <libgen.h>
 #include <unistd.h>

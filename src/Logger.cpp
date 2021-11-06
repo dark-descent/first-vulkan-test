@@ -18,6 +18,16 @@ namespace NovaEngine
 	bool Logger::shouldTerminate_ = false;
 	std::optional<std::thread> Logger::logHandlerThread_;
 
+	void Logger::onAbortHandler(int n)
+	{
+		std::cout << "ON ABORT!" << std::endl;
+		for (std::pair<std::string, Logger*> p : Logger::loggers_)
+		{
+			p.second->error("TERMINATED !!!");
+			p.second->terminate();
+		}
+	}
+
 	std::string& Logger::date()
 	{
 		static std::optional<std::string> dateString;
@@ -42,6 +52,9 @@ namespace NovaEngine
 		{
 			if (!std::filesystem::exists(logPath))
 				std::filesystem::create_directory(logPath);
+
+			std::signal(SIGABRT, &onAbortHandler);
+
 			isInitialized = true;
 		}
 
@@ -102,6 +115,10 @@ namespace NovaEngine
 	{
 		if (!logHandlerThread_.has_value())
 			logHandlerThread_.emplace(std::thread([&]() {
+			time_t rawtime;
+			struct tm* timeinfo;
+			char timeBuf[10] = {};
+
 			while (!shouldTerminate_)
 			{
 				std::unique_lock<std::mutex> lock(mutex_);
@@ -111,6 +128,16 @@ namespace NovaEngine
 				while (logQueue_.size() > 0)
 				{
 					Logger::LogInfo& info = logQueue_.front();
+
+					if (info.isNewLine)
+					{
+						time(&rawtime);
+						timeinfo = localtime(&rawtime);
+						strftime(timeBuf, 10, "%T", timeinfo);
+
+						info.logger->logFile_ << "[" << timeBuf << "] ";
+					}
+
 					info.logger->logFile_ << info.data;
 					info.logger->logFile_.flush();
 					lock.lock();
@@ -127,7 +154,8 @@ namespace NovaEngine
 			logFile_.close();
 	}
 
-	void Logger::logRest(const char* str) {
+	void Logger::logRest(const char* str) 
+	{
 		printf("%s", str);
 		forward(str);
 	}
@@ -142,7 +170,7 @@ namespace NovaEngine
 	{
 		char buf[128];
 		sprintf(buf, "%s\n", str);
-		printf(buf);
+		printf("%s\n", buf);
 		forward(buf);
 	}
 
@@ -150,14 +178,15 @@ namespace NovaEngine
 	{
 		char buf[128];
 		sprintf(buf, "%s\n", str.c_str());
-		printf(buf);
+		printf("%s\n", buf);
 		forward(buf);
 	}
 
-	void Logger::forward(const char* str)
+	void Logger::forward(const char* str, bool newLine)
 	{
 		std::unique_lock<std::mutex> lock(mutex_);
 		Logger::LogInfo info = {
+			.isNewLine = newLine,
 			.logger = this,
 			.data = str
 		};
@@ -165,10 +194,11 @@ namespace NovaEngine
 		cv_.notify_one();
 	}
 
-	void Logger::forward(std::string& str)
+	void Logger::forward(std::string& str, bool newLine)
 	{
 		std::unique_lock<std::mutex> lock(mutex_);
 		Logger::LogInfo info = {
+			.isNewLine = newLine,
 			.logger = this,
 			.data = str
 		};

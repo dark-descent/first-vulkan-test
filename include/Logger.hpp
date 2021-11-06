@@ -10,6 +10,7 @@ namespace NovaEngine
 	private:
 		struct LogInfo
 		{
+			bool isNewLine = false;
 			Logger* logger;
 			std::string data;
 		};
@@ -24,6 +25,7 @@ namespace NovaEngine
 		static bool shouldTerminate_;
 
 		static inline std::string& date();
+		static void onAbortHandler(int n);
 
 	public:
 		static Logger* get(const char* name = nullptr);
@@ -39,6 +41,9 @@ namespace NovaEngine
 		std::string path_;
 		std::ofstream logFile_;
 
+		void forward(const char* str, bool newLine = false);
+		void forward(std::string& str, bool newLine = false);
+
 	public:
 		Logger(const char* path);
 		~Logger();
@@ -51,9 +56,6 @@ namespace NovaEngine
 			ERROR,
 		};
 
-		void forward(const char* str);
-		void forward(std::string& str);
-
 		void logRest(const char* str);
 		void logRest(std::string& str);
 
@@ -64,7 +66,6 @@ namespace NovaEngine
 			logRest(rest...);
 		}
 
-	public:
 		void log(const char* str);
 		void log(std::string& str);
 
@@ -82,6 +83,7 @@ namespace NovaEngine
 			log(rest...);
 		}
 
+	public:
 		template<typename T>
 		void info(T str)
 		{
@@ -110,7 +112,7 @@ namespace NovaEngine
 		void info(T str, Ts... rest)
 		{
 			printf("%s[INFO]%s: %s", INFO_COLOR, DEFAULT_COLOR, str);
-			forward("[INFO] ");
+			forward("[INFO] ", true);
 			forward(str);
 			logRest(rest...);
 			printf("\n");
@@ -121,7 +123,7 @@ namespace NovaEngine
 		void warn(T str, Ts... rest)
 		{
 			printf("%s[WARN]%s: %s", WARN_COLOR, DEFAULT_COLOR, str);
-			forward("[WARN] ");
+			forward("[WARN] ", true);
 			forward(str);
 			logRest(rest...);
 			printf("\n");
@@ -132,7 +134,7 @@ namespace NovaEngine
 		void error(T str, Ts... rest)
 		{
 			printf("%s[ERROR]%s: %s", ERROR_COLOR, DEFAULT_COLOR, str);
-			forward("[ERROR] ");
+			forward("[ERROR] ", true);
 			forward(str);
 			logRest(rest...);
 			printf("\n");
@@ -155,7 +157,7 @@ namespace NovaEngine
 				break;
 			case Severity::DEFAULT:
 			default:
-				log(rest...);
+				info(rest...);
 				break;
 			}
 		}
@@ -176,7 +178,7 @@ namespace NovaEngine
 				break;
 			case Severity::DEFAULT:
 			default:
-				log(str);
+				info(str);
 				break;
 			}
 		}
