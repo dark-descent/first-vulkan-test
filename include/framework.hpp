@@ -19,6 +19,11 @@
 #include <type_traits>
 #include <filesystem>
 #include <stdarg.h>
+#include <ctime>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+#include <queue>
 
 #include <libgen.h>
 #include <unistd.h>

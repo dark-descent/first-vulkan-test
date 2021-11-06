@@ -7,6 +7,7 @@ Features:
 - Embedded Google's V8 Javascript Engine ✅
 - Add Game Engine logic (GameLoop, State, Script Execution)
 - Fiber Based Task system (Multi threaded)
-- Move Parallel computations to Compute Shaders
-- Use Vulkan for accelerated GPU drawing ✅
+- Use Vulkan for accelerated GPU drawing (still learning on this part :P)
+- Move Parallel computations to Compute Shaders (for example particle systems, liquid systems)
 - Port Libraries to the game (javascript) side
+- Custom Log system (on a separate thread)

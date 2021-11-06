@@ -22,8 +22,8 @@ CC_WARNING_ERRORS = return-type
 DISABLED_CC_WARNINGS = unknown-pragmas unused-function unused-variable unused-result
 
 CC = g++
-CFLAGS = $(patsubst %,-Werror=%,$(CC_WARNING_ERRORS)) -Wall $(patsubst %,-Wno-%,$(DISABLED_CC_WARNINGS)) -std=c++17 -O2 -flto $(LIBS) $(INCLUDE_DIRS) $(DEFINES)
-LDFLAGS = -flto -L$(V8_DIR) $(LIBS) $(DEFINES)
+CFLAGS = $(patsubst %,-Werror=%,$(CC_WARNING_ERRORS)) -Wall $(patsubst %,-Wno-%,$(DISABLED_CC_WARNINGS)) -std=c++17 -O2 -flto $(LIBS) $(INCLUDE_DIRS) $(DEFINES) -pthread -lpthread
+LDFLAGS = -flto -L$(V8_DIR) $(LIBS) $(DEFINES) -pthread  -lpthread
 
 DIRS := $(shell find src -type d)
 
@@ -43,7 +43,6 @@ SHADER_VERT_OUT = $(patsubst %.vert,out/assets/%.vert.spv,$(SHADER_VERT_SRCS))
 SHADER_FRAG_OUT = $(patsubst %.frag,out/assets/%.frag.spv,$(SHADER_FRAG_SRCS))
 
 test-game: $(OUT_FILE) compile-shaders test-game-scripts
-	@rm -rf $(TEST_GAME_OUT)
 	@mkdir -p $(TEST_GAME_OUT)
 	@cp $(OUT_FILE) $(TEST_GAME_OUT)/$(ENGINE_NAME)
 	@cp -a $(OUT_DIR)/assets $(TEST_GAME_OUT)/assets

@@ -8,6 +8,7 @@
 #include "AssetManager.hpp"
 #include "GameWindow.hpp"
 #include "graphics/GraphicsManager.hpp"
+#include "Logger.hpp"
 
 namespace NovaEngine
 {
@@ -38,7 +39,7 @@ namespace NovaEngine
 		void start();
 		/* gets called from the game to start and stop the engine */
 		void stop();
-		
+
 	protected:
 
 		bool onInitialize(const char*);
@@ -46,24 +47,26 @@ namespace NovaEngine
 
 	private:
 		template<typename... Args>
-		inline bool initSubSystem(const char* name, SubSystem<Args...>* subSystem, Args... args)
+		bool initSubSystem(const char* name, SubSystem<Args...>* subSystem, Args... args)
 		{
+			Logger* l = Logger::get();
+
 			if (std::count(subSystems_.begin(), subSystems_.end(), subSystem))
 			{
-				printf("\033[;34m[%s]\033[0m:\033[;31m SubSystem is already initialized!\033[0m\n", name);
+				l->error("Subsystem ", name, " is already initialized!");
 				return false;
 			}
 			else
 			{
-				printf("\033[;34m[%s]\033[0m: Initializing...\n", name);
-
+				l->info("Initializing ", name, "...");
 				if (!subSystem->initialize(args...))
 				{
+					l->error("Failed to initialize ", name, "!");
 					return false;
 				}
 				else
 				{
-					printf("\033[;34m[%s]\033[0m: Initialized!\n", name);
+					l->info(name, " initialized!");
 					subSystems_.push_back(subSystem);
 					return true;
 				}

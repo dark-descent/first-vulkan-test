@@ -1,4 +1,7 @@
 #include "Engine.hpp"
+#include "Logger.hpp"
+
+#include <signal.h>
 
 #define CHECK_REJECT(subSystem, rejector, msg) if(!subSystem) { rejector(msg); printf(msg); return false; }
 
@@ -7,8 +10,16 @@ namespace NovaEngine
 	namespace
 	{
 		v8::Global<v8::Promise::Resolver> configurePromiseResolver_;
-		static v8::Global<v8::Function> onLoadCallback_;
-		static v8::Global<v8::Object> configuredValue_;
+		v8::Global<v8::Function> onLoadCallback_;
+		v8::Global<v8::Object> configuredValue_;
+
+		std::vector<Engine*> engineInstances_;
+
+		extern "C" void onAbortHandler(int signal_number)
+		{
+			for (Engine* e : engineInstances_)
+				e->terminate();
+		}
 
 		SCRIPT_METHOD(onEngineConfigure)
 		{
@@ -104,26 +115,33 @@ namespace NovaEngine
 
 	char Engine::executablePath_[PATH_MAX];
 
-	Engine::Engine() : AbstractObject(), isRunning_(false), assetManager(this), scriptManager(this), configManager(this), graphicsManager(this), gameWindow(this) {}
-
-	inline bool Engine::initSubSystem(const char* name, SubSystem<>* subSystem)
+	Engine::Engine() : AbstractObject(), isRunning_(false), assetManager(this), scriptManager(this), configManager(this), graphicsManager(this), gameWindow(this)
 	{
+		if (engineInstances_.size() == 0)
+			signal(SIGABRT, &onAbortHandler);
+		engineInstances_.push_back(this);
+	}
+
+	bool Engine::initSubSystem(const char* name, SubSystem<>* subSystem)
+	{
+		Logger* l = Logger::get();
+
 		if (std::count(subSystems_.begin(), subSystems_.end(), subSystem))
 		{
-			printf("\033[;34m[%s]\033[0m:\033[;31m SubSystem is already initialized!\033[0m\n", name);
+			l->error("Subsystem ", name, " is already initialized!");
 			return false;
 		}
 		else
 		{
-			printf("\033[;34m[%s]\033[0m: Initializing...\n", name);
-
+			l->info("Initializing ", name, "...");
 			if (!subSystem->initialize())
 			{
+				l->error("Failed to initialize ", name, "!");
 				return false;
 			}
 			else
 			{
-				printf("\033[;34m[%s]\033[0m: Initialized!\n", name);
+				l->info(name, " initialized!");
 				subSystems_.push_back(subSystem);
 				return true;
 			}
@@ -221,16 +239,10 @@ namespace NovaEngine
 
 			isRunning_ = true;
 
-			printf(gameWindow.isOpen() ? "open" : "closed");
-			printf("...\n");
-
 			while (gameWindow.isOpen())
 			{
 				glfwPollEvents();
 			}
-
-			printf(gameWindow.isOpen() ? "open" : "closed");
-			printf("...\n");
 		}
 	}
 
@@ -250,10 +262,13 @@ namespace NovaEngine
 		configurePromiseResolver_.Reset();
 		onLoadCallback_.Reset();
 		configuredValue_.Reset();
-		
+
 		configManager.terminate();
 		scriptManager.terminate();
 		assetManager.terminate();
+
+		Logger::terminate();
+
 		return true;
 	}
 };
