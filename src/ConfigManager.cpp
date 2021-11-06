@@ -61,36 +61,6 @@ namespace NovaEngine
 
 	};
 
-	size_t tabs = 0;
-
-	void check(v8::Isolate* isolate, const v8::Local<v8::Value>& o, const char* name = nullptr)
-	{
-		using namespace v8;
-
-		std::string buf;
-
-		for (size_t i = 0; i < tabs; i++)
-			buf += "  ";
-
-		v8::String::Utf8Value typeVal(o->TypeOf(isolate));
-
-		if (name != nullptr)
-			buf += name + std::string(": ") + *typeVal;
-		tabs++;
-
-		Logger::get()->info(buf);
-
-		if (o->IsObject() || o->IsFunction())
-		{
-			Local<Object> obj = o->ToObject();
-			ScriptManager::iterateObjectKeys(obj, [&](char* k, const Local<Value> val) {
-				check(isolate, val, k);
-			});
-		}
-
-		tabs--;
-	}
-
 	bool ConfigManager::parseConfigObject(const v8::Local<v8::Object>& config)
 	{
 		if (!isConfigured_)
@@ -113,10 +83,9 @@ namespace NovaEngine
 				engineConfig_.window.maximized = Parser::parseBool(windowObj, "maximized", true);
 				engineConfig_.window.hidden = Parser::parseBool(windowObj, "hidden", false);
 			}
-			Logger::get()->info("check... %s", engineConfig_.name.c_str());
-			check(config->CreationContext()->GetIsolate(), config, "config");
-
-			isConfigured_ = true;
+			
+			ScriptManager::printObject(config->CreationContext()->GetIsolate(), config, "config");
+			isConfigured_ = true;			
 			return true;
 		}
 

@@ -45,6 +45,8 @@ namespace NovaEngine
 
 		static Engine* fetchEngineFromArgs(const v8::FunctionCallbackInfo<v8::Value>& args);
 
+		static void printObject(v8::Isolate* isolate, const v8::Local<v8::Value>& o, const char* name = nullptr);
+
 	private:
 		ENGINE_SUB_SYSTEM_CTOR(ScriptManager),
 			createParams_(),

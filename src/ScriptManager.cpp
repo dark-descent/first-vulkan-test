@@ -276,4 +276,75 @@ namespace NovaEngine
 	{
 		return static_cast<Engine*>(args.GetIsolate()->GetData(0));
 	}
+
+	void ScriptManager::printObject(v8::Isolate* isolate, const v8::Local<v8::Value>& o, const char* name)
+	{
+		using namespace v8;
+
+		static size_t tabs = 0;
+
+		std::string buf;
+
+		if (tabs == 0)
+		{
+			puts("{");
+			tabs = 1;
+		}
+
+		for (size_t i = 0; i < tabs; i++)
+			printf("    ");
+
+
+		String::Utf8Value typeVal(o->TypeOf(isolate));
+
+		if (name != nullptr)
+		{
+			std::string n = std::string(name);
+			n += std::string(": ") + *typeVal;
+			printf("%s", n.c_str());
+		}
+
+		tabs++;
+
+		printf(",\n");
+
+		if (o->IsObject())
+		{
+			for (size_t i = 0; i < tabs - 1; i++)
+				printf("    ");
+			puts("{");
+			Local<Object> obj = o->ToObject();
+			ScriptManager::iterateObjectKeys(obj, [&](char* k, const Local<Value> val) {
+				printObject(isolate, val, k);
+			});
+			for (size_t i = 0; i < tabs - 1; i++)
+				printf("    ");
+			puts("},");
+		}
+		else if (o->IsFunction())
+		{
+			String::Utf8Value val(o->ToString(isolate));
+			printf("%s,", *val);
+		}
+		else if (o->IsArray())
+		{
+			for (size_t i = 0; i < tabs - 1; i++)
+				printf("    ");
+			puts("[");
+			Local<Object> obj = o->ToObject();
+			ScriptManager::iterateObjectKeys(obj, [&](char* k, const Local<Value> val) {
+				printObject(isolate, val, nullptr);
+			});
+			for (size_t i = 0; i < tabs - 1; i++)
+				printf("    ");
+			puts("],");
+		}
+
+		tabs--;
+
+		if (tabs == 1)
+		{
+			puts("}");
+		}
+	}
 };
