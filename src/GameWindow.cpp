@@ -4,10 +4,26 @@
 
 namespace NovaEngine
 {
+	bool GameWindow::isGlfwInitialized_ = false;
 
 	GameWindow::GameWindow(Engine* engine): engine_(engine), window_(nullptr)
 	{
-		glfwInit();
+		if(!isGlfwInitialized_)
+		{
+			isGlfwInitialized_ = glfwInit() != GLFW_FALSE;
+			if(!isGlfwInitialized_)
+				throw "Could not initialize GLFW!\n";
+		}
+	}
+
+	GameWindow::~GameWindow()
+	{
+		if(isGlfwInitialized_)
+		{
+			printf("terminating GLFW!...\n");
+			glfwTerminate();
+			isGlfwInitialized_ = false;
+		}
 	}
 
 	bool GameWindow::create(const char* title, const GameWindowConfig& config)
@@ -54,7 +70,10 @@ namespace NovaEngine
 	void GameWindow::close()
 	{
 		if(window_ != nullptr)
+		{
+			printf("window::close()...\n");
 			glfwDestroyWindow(window_);
+		}
 	}
 
 	GLFWwindow* GameWindow::glfwWindow()

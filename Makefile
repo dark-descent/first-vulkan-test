@@ -10,7 +10,7 @@ V8_DIR = ~/src/v8/v8/out.gn/x64.release/obj
 
 _LIBS = glfw vulkan dl v8
 _INCLUDE_DIRS = /usr/include/v8 include
-_DEFINES = DEBUG
+_DEFINES = DEBUG NDEBUG
 LIBS = $(patsubst %,-l%,$(_LIBS))
 INCLUDE_DIRS = $(patsubst %,-I%,$(_INCLUDE_DIRS))
 DEFINES = $(patsubst %,-D%,$(_DEFINES))

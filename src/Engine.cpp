@@ -1,7 +1,6 @@
 #include "Engine.hpp"
 
-#define CHECK(subSystem) if(!subSystem) return false;
-#define CHECK_REJECT(subSystem, rejector) if(!subSystem) { rejector; return false; }
+#define CHECK_REJECT(subSystem, rejector, msg) if(!subSystem) { rejector(msg); printf(msg); return false; }
 
 namespace NovaEngine
 {
@@ -105,7 +104,7 @@ namespace NovaEngine
 
 	char Engine::executablePath_[PATH_MAX];
 
-	Engine::Engine() : AbstractObject(), assetManager(this), scriptManager(this), configManager(this), graphicsManager(this), gameWindow(this) {}
+	Engine::Engine() : AbstractObject(), isRunning_(false), assetManager(this), scriptManager(this), configManager(this), graphicsManager(this), gameWindow(this) {}
 
 	inline bool Engine::initSubSystem(const char* name, SubSystem<>* subSystem)
 	{
@@ -137,8 +136,8 @@ namespace NovaEngine
 
 		printf("Initializing Engine...\n");
 
-		CHECK(initSubSystem("Asset manager", &assetManager, executablePath()));
-		CHECK(initSubSystem("Script Manager", &scriptManager, globalInitializer));
+		CHECK(initSubSystem("Asset manager", &assetManager, executablePath()), "Failed to initialize Asset Manager!");
+		CHECK(initSubSystem("Script Manager", &scriptManager, globalInitializer), "Failed to initialie Script Manager!");
 
 		scriptManager.load(gameStartupScript == nullptr ? "Game.js" : gameStartupScript);
 		if (onLoadCallback_.IsEmpty())
@@ -165,11 +164,11 @@ namespace NovaEngine
 		if (!configuredValue_.IsEmpty())
 			configInitialized = initSubSystem("Config Manager", &configManager, &configuredValue_);
 
-		CHECK_REJECT(configInitialized, rejectGameConfig("Could not initialize Config Manager!"));
+		CHECK_REJECT(configInitialized, rejectGameConfig, "Could not initialize Config Manager!");
 
-		CHECK_REJECT(gameWindow.create(configManager.getConfig()->name.c_str(), configManager.getConfig()->window), rejectGameConfig("Could not create Game Window!"));
+		CHECK_REJECT(gameWindow.create(configManager.getConfig()->name.c_str(), configManager.getConfig()->window), rejectGameConfig, "Could not create Game Window!");
 
-		CHECK_REJECT(initSubSystem("Graphics Manager", &graphicsManager, gameWindow.glfwWindow()), rejectGameConfig("Could not create graphics stack!"));
+		CHECK_REJECT(initSubSystem("Graphics Manager", &graphicsManager, gameWindow.glfwWindow()), rejectGameConfig, "Could not create graphics stack!");
 
 		return true;
 	}
@@ -218,18 +217,20 @@ namespace NovaEngine
 	{
 		if (!isRunning_)
 		{
+			printf("starting engine...\n");
+
 			isRunning_ = true;
+
+			printf(gameWindow.isOpen() ? "open" : "closed");
+			printf("...\n");
 
 			while (gameWindow.isOpen())
 			{
-				if (!isRunning_)
-				{
-					gameWindow.close();
-					break;
-				}
-
 				glfwPollEvents();
 			}
+
+			printf(gameWindow.isOpen() ? "open" : "closed");
+			printf("...\n");
 		}
 	}
 
@@ -249,10 +250,7 @@ namespace NovaEngine
 		configurePromiseResolver_.Reset();
 		onLoadCallback_.Reset();
 		configuredValue_.Reset();
-
-		gameWindow.close();
-
-		graphicsManager.terminate();
+		
 		configManager.terminate();
 		scriptManager.terminate();
 		assetManager.terminate();

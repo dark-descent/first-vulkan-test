@@ -35,17 +35,13 @@
 
 #pragma region DEFINES
 
-#ifdef DEBUG
-#define CHECK_OR_RETURN(expr, msg) { if(!expr) \
-{ \
-	printf(msg"\n"); \
-	return false; \
-} }
+#ifdef NDEBUG
+#define CHECK(expr, msg) { if(!expr) { printf(msg"\n"); return false; } else { printf(#expr" success!\n"); } }
 #else
-#define CHECK_OR_RETURN(expr, msg) if(!expr) return false;
+#define CHECK(expr, msg) if(!expr) return false;
 #endif
 
-#ifdef DEBUG
+#ifdef NDEBUG
 #define ON_DEBUG(expr) expr
 #else
 #define ON_DEBUG(expr)

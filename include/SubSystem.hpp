@@ -3,8 +3,9 @@
 
 #include "Terminatable.hpp"
 
-#define ENGINE_SUB_SYSTEM_CTOR(name) friend class Engine; \
+#define ENGINE_SUB_SYSTEM_CTOR(name) friend class NovaEngine::Engine; \
 name(Engine* engine) : SubSystem(engine)
+
 
 namespace NovaEngine
 {

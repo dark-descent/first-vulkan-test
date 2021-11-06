@@ -7,7 +7,7 @@
 #include "AbstractObject.hpp"
 #include "AssetManager.hpp"
 #include "GameWindow.hpp"
-#include "GraphicsManager.hpp"
+#include "graphics/GraphicsManager.hpp"
 
 namespace NovaEngine
 {
@@ -23,7 +23,7 @@ namespace NovaEngine
 		AssetManager assetManager;
 		ScriptManager scriptManager;
 		ConfigManager configManager;
-		GraphicsManager graphicsManager;
+		Graphics::GraphicsManager graphicsManager;
 		GameWindow gameWindow;
 
 		Engine();

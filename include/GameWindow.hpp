@@ -11,10 +11,13 @@ namespace NovaEngine
 
 	class GameWindow
 	{
-	public:
+		static bool isGlfwInitialized_;
 
 		GameWindow(Engine* engine);
-
+	
+	public:
+		~GameWindow();
+	
 		bool create(const char* title, const GameWindowConfig& config);
 
 		/** @returns true if the game window went into fullscreen mode */
@@ -31,6 +34,8 @@ namespace NovaEngine
 	private:
 		Engine* engine_;
 		GLFWwindow* window_;
+
+		friend class Engine;
 	};
 }
 #endif
