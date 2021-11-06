@@ -83,7 +83,9 @@
 			"cinttypes": "cpp",
 			"typeinfo": "cpp",
 			"queue": "cpp",
-			"mutex": "cpp"
+			"mutex": "cpp",
+			"condition_variable": "cpp",
+			"csignal": "cpp"
 		}
 	}
 }

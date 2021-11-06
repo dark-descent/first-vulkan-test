@@ -24,7 +24,7 @@ namespace NovaEngine
 
 		static bool shouldTerminate_;
 
-		static inline std::string& date();
+		static std::string& date();
 		static void onAbortHandler(int n);
 
 	public:

@@ -1,11 +1,12 @@
 #include "AssetManager.hpp"
+#include "Logger.hpp"
 
 namespace NovaEngine
 {
 	bool AssetManager::onInitialize(const char* execPath)
 	{
 		rootDir_ = Utils::Path::combine(execPath, "assets").string();
-		printf("Loaded AssetManager with rootDir: '%s'\n", rootDir_.c_str());
+		Logger::get()->info("Loaded AssetManager with rootDir: ", rootDir_.c_str());
 		return true;
 	}
 
@@ -26,7 +27,6 @@ namespace NovaEngine
 
 		file.seekg(0, std::ios::beg);
 		fileContents.resize(size + 1);
-		// printf("file size %u", size);
 
 
 		if (file.read(fileContents.data(), size))

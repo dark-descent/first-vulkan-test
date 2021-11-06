@@ -59,7 +59,7 @@ namespace NovaEngine
 		{
 			v8::V8::Dispose();
 			v8::V8::ShutdownPlatform();
-			printf("V8 Disposed!\n");
+			Logger::get()->info("V8 Disposed!");
 		}
 
 		return true;
@@ -200,7 +200,7 @@ namespace NovaEngine
 
 				if (modules_.find(cleanModulePath) == modules_.end())
 				{
-					printf("could not get exports!\n");
+					Logger::get()->warn("could not get exports!");
 					return;
 				}
 				else
@@ -242,14 +242,14 @@ namespace NovaEngine
 
 			if (!exports->Set(context, createString("__ABSOLUTE_PATH__"), createString(path)).ToChecked())
 			{
-				printf("Failed to set __ABSOLUTE_PATH__!\n");
+				Logger::get()->warn("Failed to set __ABSOLUTE_PATH__!");
 				if (!prevExports.IsEmpty() && (moduleRequireCounter_ != 0))
 					global->Set(context, createString("exports"), prevExports.ToLocalChecked()->ToObject());
 			}
 
 			if (!global->Set(context, createString("exports"), exports).ToChecked())
 			{
-				printf("Failed to set exports!\n");
+				Logger::get()->warn("Failed to set exports!");
 				if (!prevExports.IsEmpty() && (moduleRequireCounter_ != 0))
 					global->Set(context, createString("exports"), prevExports.ToLocalChecked()->ToObject());
 			}

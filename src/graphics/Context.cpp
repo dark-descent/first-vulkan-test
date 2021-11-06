@@ -1,10 +1,11 @@
 #include "graphics/Context.hpp"
 
 #include "Engine.hpp"
+#include "Logger.hpp"
 
-#define VK_INIT(var, expr) { var = expr(); if(var == VK_NULL_HANDLE) { printf(#var " = " #expr "() FAILED!\n"); return false; } }
-#define VK_INIT_ARGS(var, expr, args) { var = expr(args); if(var == VK_NULL_HANDLE) { printf(#var " = " #expr "(" #args ") FAILED!\n"); return false; } }
-#define VK_CHECK(expr) { if(expr != VK_SUCCESS) { printf(#expr " Failed!\n"); return VK_NULL_HANDLE; } }
+#define VK_INIT(var, expr) { var = expr(); if(var == VK_NULL_HANDLE) { Logger::get()->error(#var " = " #expr "() FAILED!"); return false; } }
+#define VK_INIT_ARGS(var, expr, args) { var = expr(args); if(var == VK_NULL_HANDLE) { Logger::get()->error(#var " = " #expr "(" #args ") FAILED!"); return false; } }
+#define VK_CHECK(expr) { if(expr != VK_SUCCESS) { Logger::get()->error(#expr " Failed!"); return VK_NULL_HANDLE; } }
 
 namespace NovaEngine::Graphics
 {
@@ -131,7 +132,7 @@ namespace NovaEngine::Graphics
 
 	VKAPI_ATTR VkBool32 VKAPI_CALL Context::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
 	{
-		printf("validation layer: %s\n", pCallbackData->pMessage);
+		Logger::get()->info("validation layer: ", pCallbackData->pMessage);
 		return VK_FALSE;
 	}
 

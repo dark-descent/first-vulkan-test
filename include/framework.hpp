@@ -43,7 +43,7 @@
 #pragma region DEFINES
 
 #ifdef NDEBUG
-#define CHECK(expr, msg) { if(!expr) { printf(msg"\n"); return false; } else { printf(#expr" success!\n"); } }
+#define CHECK(expr, msg) { if(!expr) { Logger::get()->error(msg); return false; } else { Logger::get()->info(#expr" success!"); } }
 #else
 #define CHECK(expr, msg) if(!expr) return false;
 #endif

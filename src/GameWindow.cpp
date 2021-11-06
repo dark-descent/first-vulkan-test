@@ -1,6 +1,7 @@
 #include "GameWindow.hpp"
 #include "framework.hpp"
 #include "ConfigManager.hpp"
+#include "Logger.hpp"
 
 namespace NovaEngine
 {
@@ -12,7 +13,7 @@ namespace NovaEngine
 		{
 			isGlfwInitialized_ = glfwInit() != GLFW_FALSE;
 			if(!isGlfwInitialized_)
-				throw "Could not initialize GLFW!\n";
+				throw "Could not initialize GLFW!";
 		}
 	}
 
@@ -20,7 +21,7 @@ namespace NovaEngine
 	{
 		if(isGlfwInitialized_)
 		{
-			printf("terminating GLFW!...\n");
+			Logger::get()->info("terminating GLFW!...");
 			glfwTerminate();
 			isGlfwInitialized_ = false;
 		}
@@ -39,7 +40,7 @@ namespace NovaEngine
 
 			if (window_ == nullptr)
 			{
-				printf("Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n");
+				Logger::get()->error("Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.");
 				glfwTerminate();
 				return false;
 			}
@@ -51,7 +52,7 @@ namespace NovaEngine
 		}
 		else
 		{
-			printf("Window already exists!");
+			Logger::get()->warn("Window already exists!");
 			return false;
 		}
 	}
@@ -71,7 +72,7 @@ namespace NovaEngine
 	{
 		if(window_ != nullptr)
 		{
-			printf("window::close()...\n");
+			Logger::get()->info("window::close()...");
 			glfwDestroyWindow(window_);
 		}
 	}

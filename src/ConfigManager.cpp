@@ -67,15 +67,18 @@ namespace NovaEngine
 	{
 		using namespace v8;
 
+		std::string buf;
+
 		for (size_t i = 0; i < tabs; i++)
-			printf("  ");
+			buf += "  ";
 
 		v8::String::Utf8Value typeVal(o->TypeOf(isolate));
 
 		if (name != nullptr)
-			printf("%s: %s\n", name, *typeVal);
-
+			buf += name + std::string(": ") + *typeVal;
 		tabs++;
+
+		Logger::get()->info(buf);
 
 		if (o->IsObject() || o->IsFunction())
 		{
@@ -110,7 +113,7 @@ namespace NovaEngine
 				engineConfig_.window.maximized = Parser::parseBool(windowObj, "maximized", true);
 				engineConfig_.window.hidden = Parser::parseBool(windowObj, "hidden", false);
 			}
-			printf("check... %s\n", engineConfig_.name.c_str());
+			Logger::get()->info("check... %s", engineConfig_.name.c_str());
 			check(config->CreationContext()->GetIsolate(), config, "config");
 
 			isConfigured_ = true;

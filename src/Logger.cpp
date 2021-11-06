@@ -87,8 +87,6 @@ namespace NovaEngine
 			if (version != 0)
 				generatedFileName += "-" + std::to_string(version);
 
-			printf("generated file name: %s\n", generatedFileName.c_str());
-
 			std::string path = Utils::Path::combine(logPath, generatedFileName + ".log");
 			loggers_[fileName] = new Logger(path.c_str());
 		}

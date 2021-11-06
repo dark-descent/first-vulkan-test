@@ -1,6 +1,7 @@
 #include "Engine.hpp"
 #include "Logger.hpp"
-#define CHECK_REJECT(subSystem, rejector, msg) if(!subSystem) { rejector(msg); printf(msg); return false; }
+
+#define CHECK_REJECT(subSystem, rejector, msg) if(!subSystem) { rejector(msg); Logger::get()->error(#subSystem ":" #rejector " -> " msg); return false; }
 
 namespace NovaEngine
 {
@@ -42,18 +43,16 @@ namespace NovaEngine
 		SCRIPT_METHOD(log)
 		{
 			v8::Isolate* isolate = args.GetIsolate();
-			printf("\033[;32m[Game]\033[0m ");
+			std::string buf = "[Game] ";
 			for (int i = 0; i < args.Length(); i++)
 			{
 				auto a = args[i]->ToString(isolate);
 				v8::String::Utf8Value val(a);
-				printf("%s", *val);
+				buf += *val;
 				if (i != args.Length() - 1)
-				{
-					printf(", ");
-				}
+					buf += ", ";
 			}
-			printf("\n");
+			Logger::get()->info(buf);
 		}
 
 		// the game will call this to configure the engine
@@ -79,7 +78,7 @@ namespace NovaEngine
 		{
 			Engine* engine = ScriptManager::fetchEngineFromArgs(args);
 			engine->start();
-			printf("on engine start called!\n");
+			Logger::get()->info("on engine start called!");
 		}
 
 		SCRIPT_METHOD(onShowWindow)
@@ -149,7 +148,7 @@ namespace NovaEngine
 	{
 		Engine engine();
 
-		printf("Initializing Engine...\n");
+		Logger::get()->info("Initializing Engine...");
 
 		CHECK(initSubSystem("Asset manager", &assetManager, executablePath()), "Failed to initialize Asset Manager!");
 		CHECK(initSubSystem("Script Manager", &scriptManager, globalInitializer), "Failed to initialie Script Manager!");
@@ -195,7 +194,7 @@ namespace NovaEngine
 			int exePathLength = readlink("/proc/self/exe", executablePath_, PATH_MAX);
 			if (exePathLength == -1)
 			{
-				printf("Could not set executablePath_!\n");
+				Logger::get()->error("Could not set executablePath_!");
 			}
 			else
 			{
@@ -232,7 +231,7 @@ namespace NovaEngine
 	{
 		if (!isRunning_)
 		{
-			printf("starting engine...\n");
+			Logger::get()->info("starting engine...");
 
 			isRunning_ = true;
 
