@@ -88,7 +88,7 @@ namespace NovaEngine
 		void info(T str)
 		{
 			printf("%s[INFO]%s: ", INFO_COLOR, DEFAULT_COLOR);
-			forward("[INFO] ");
+			forward("[INFO] ", true);
 			log(str);
 		}
 
@@ -96,7 +96,7 @@ namespace NovaEngine
 		void warn(T str)
 		{
 			printf("%s[WARN]%s: ", WARN_COLOR, DEFAULT_COLOR);
-			forward("[WARN] ");
+			forward("[WARN] ", true);
 			log(str);
 		}
 
@@ -104,7 +104,7 @@ namespace NovaEngine
 		void error(T str)
 		{
 			printf("%s[ERROR]%s: ", ERROR_COLOR, DEFAULT_COLOR);
-			forward("[ERROR] ");
+			forward("[ERROR] ", true);
 			log(str);
 		}
 

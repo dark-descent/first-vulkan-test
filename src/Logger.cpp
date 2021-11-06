@@ -168,7 +168,7 @@ namespace NovaEngine
 	{
 		char buf[128];
 		sprintf(buf, "%s\n", str);
-		printf("%s\n", buf);
+		printf("%s", buf);
 		forward(buf);
 	}
 
@@ -176,7 +176,7 @@ namespace NovaEngine
 	{
 		char buf[128];
 		sprintf(buf, "%s\n", str.c_str());
-		printf("%s\n", buf);
+		printf("%s", buf);
 		forward(buf);
 	}
 
