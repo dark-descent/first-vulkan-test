@@ -144,10 +144,10 @@ namespace NovaEngine::Graphics
 	bool SwapChain::onTerminate()
 	{
 		for (const VkImageView& v : imageViews_)
-        	vkDestroyImageView(*ctx_->device(), v, nullptr);
+			vkDestroyImageView(*ctx_->device(), v, nullptr);
 
 		vkDestroySwapchainKHR(*ctx_->device(), swapChain_, nullptr);
-		
+
 		return true;
 	}
 
@@ -172,5 +172,28 @@ namespace NovaEngine::Graphics
 		return extent_;
 	}
 
+	bool SwapChain::initFrameBuffers()
+	{
+		framebuffers_.resize(imageViews_.size());
+		
+		for (size_t i = 0; i < imageViews_.size(); i++) {
+			VkImageView attachments[] = {
+				imageViews_[i]
+			};
 
+			VkFramebufferCreateInfo framebufferInfo = {};
+			framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+			framebufferInfo.renderPass = context()->renderPass();
+			framebufferInfo.attachmentCount = 1;
+			framebufferInfo.pAttachments = attachments;
+			framebufferInfo.width = extent_.width;
+			framebufferInfo.height = extent_.height;
+			framebufferInfo.layers = 1;
+
+			if (vkCreateFramebuffer(*context()->device(), &framebufferInfo, nullptr, &framebuffers_[i]) != VK_SUCCESS)
+				return false;
+		}
+
+		return true;
+	}
 };

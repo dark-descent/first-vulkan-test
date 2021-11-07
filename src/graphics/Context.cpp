@@ -49,7 +49,14 @@ namespace NovaEngine::Graphics
 			Logger::get()->error("Could not initialize pipeline!");
 			return false;
 		}
-		
+
+		if(!swapChain_.initFrameBuffers())
+		{
+			Logger::get()->error("Could not initialize frame buffers!");
+			return false;
+		}
+
+
 		return true;
 	}
 
@@ -234,7 +241,7 @@ namespace NovaEngine::Graphics
 		if (strncmp(pCallbackData->pMessage, "Device Extension: ", 18) == 0)
 			return VK_FALSE;
 
-		if (messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT || messageSeverity == messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT)
+		if ((messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) || (messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT))
 			Logger::get()->info(pCallbackData->pMessage);
 		if (messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
 			Logger::get()->warn(pCallbackData->pMessage);
