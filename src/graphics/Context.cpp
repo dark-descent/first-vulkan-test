@@ -19,8 +19,10 @@ namespace NovaEngine::Graphics
 	};
 #endif
 
-	bool Context::onInitialize(const char* name, GLFWwindow* window)
+	bool Context::onInitialize(Engine* engine, const char* name, GLFWwindow* window)
 	{
+		engine_ = engine;
+
 		VK_INIT_ARGS(instance_, createVulkanInstance, name);
 
 		if (!isVulkanSupported())
@@ -40,11 +42,21 @@ namespace NovaEngine::Graphics
 		INIT_GFX_OBJ_ARGS(device_, nullptr);
 		INIT_GFX_OBJ(swapChain_);
 
+		VK_INIT(renderPass_, createRenderPass);
+
+		if(!pipeline_.initialize("unlit", "unlit"))
+		{
+			Logger::get()->error("Could not initialize pipeline!");
+			return false;
+		}
+		
 		return true;
 	}
 
 	bool Context::onTerminate()
 	{
+		pipeline_.terminate();
+		vkDestroyRenderPass(*device_, renderPass_, nullptr);
 		swapChain_.terminate();
 		device_.terminate();
 		physicalDevice_.terminate();
@@ -54,19 +66,61 @@ namespace NovaEngine::Graphics
 		return true;
 	}
 
-
+	Engine* Context::engine() { return engine_; }
 	GLFWwindow* Context::window() { return window_; }
 	VkInstance& Context::instance() { return instance_; }
 	PhysicalDevice& Context::physicalDevice() { return physicalDevice_; }
 	Device& Context::device() { return device_; }
 	VkSurfaceKHR& Context::surface() { return surface_; }
 	SwapChain& Context::swapChain() { return swapChain_; }
+	VkRenderPass& Context::renderPass() { return renderPass_; }
+	Pipeline& Context::pipeline() { return pipeline_; }
 
 	bool Context::isVulkanSupported()
 	{
 		uint32_t deviceCount = 0;
 		vkEnumeratePhysicalDevices(instance_, &deviceCount, nullptr);
 		return deviceCount != 0;
+	}
+
+	VkRenderPass Context::createRenderPass()
+	{
+		VkAttachmentDescription colorAttachment{};
+		colorAttachment.format = swapChain_.format().format;
+		colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+		colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+		VkAttachmentReference colorAttachmentRef = {};
+		colorAttachmentRef.attachment = 0;
+		colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+		VkSubpassDescription subpass = {};
+		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+		subpass.colorAttachmentCount = 1;
+		subpass.pColorAttachments = &colorAttachmentRef;
+
+
+		VkRenderPassCreateInfo renderPassInfo = {};
+		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+		renderPassInfo.attachmentCount = 1;
+		renderPassInfo.pAttachments = &colorAttachment;
+		renderPassInfo.subpassCount = 1;
+		renderPassInfo.pSubpasses = &subpass;
+
+		VkRenderPass renderPass;
+		
+		if (vkCreateRenderPass(*device(), &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS)
+		{
+			Logger::get()->error("Failed to create render pass!");
+			return VK_NULL_HANDLE;
+		}
+
+		return renderPass;
 	}
 
 #pragma region Static Create Methods 
@@ -177,7 +231,7 @@ namespace NovaEngine::Graphics
 
 	VKAPI_ATTR VkBool32 VKAPI_CALL Context::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
 	{
-		if(strncmp(pCallbackData->pMessage, "Device Extension: ", 18) == 0)
+		if (strncmp(pCallbackData->pMessage, "Device Extension: ", 18) == 0)
 			return VK_FALSE;
 
 		if (messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT || messageSeverity == messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT)

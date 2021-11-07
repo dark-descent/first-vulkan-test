@@ -20,6 +20,7 @@ namespace NovaEngine
 
 	public:
 		bool loadFile(const char* assetPath, std::vector<char>& fileContents);
+		bool loadTextFile(const char* assetPath, std::vector<char>& fileContents);
 		bool fileExists(const char* assetPath);
 
 	protected:

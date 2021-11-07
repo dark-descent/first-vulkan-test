@@ -234,7 +234,7 @@ namespace NovaEngine
 			std::vector<char> content = { '\0' };
 			std::string scriptPath = Utils::Path::combine("scripts", path).string();
 
-			this->engine()->assetManager.loadFile(scriptPath.c_str(), content);
+			this->engine()->assetManager.loadTextFile(scriptPath.c_str(), content);
 
 			v8::Local<v8::Object> global = context->Global();
 			v8::Local<v8::Object> exports = v8::Object::New(isolate_);

@@ -92,3 +92,7 @@ test-game-scripts: $(TEST_GAME_SCRIPTS)
 clean:
 	rm -rf out/**
 	rm -rf test-game-build
+
+clear:
+	$(MAKE) clean
+	clear

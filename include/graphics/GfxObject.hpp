@@ -3,7 +3,7 @@
 
 #include "AbstractObject.hpp"
 
-#define GFX_CTOR(type) private: friend class Context; type(Context* ctx) : GfxObject(ctx)
+#define GFX_CTOR(type) friend class Context; type(Context* ctx) : GfxObject(ctx)
 
 namespace NovaEngine::Graphics
 {

@@ -6,15 +6,23 @@
 #include "graphics/PhysicalDevice.hpp"
 #include "graphics/Device.hpp"
 #include "graphics/SwapChain.hpp"
+#include "graphics/Pipeline.hpp"
+
+namespace NovaEngine
+{
+	class Engine;
+};
 
 namespace NovaEngine::Graphics
 {
 	class GraphicsManager;
 
-	class Context : public AbstractObject<const char*, GLFWwindow*>
+	class Context : public AbstractObject<Engine*, const char*, GLFWwindow*>
 	{
 	private:
 		static const char* defaultAppName;
+
+		Engine* engine_;
 
 		GLFWwindow* window_;
 		VkInstance instance_;
@@ -22,29 +30,38 @@ namespace NovaEngine::Graphics
 		Device device_;
 		VkSurfaceKHR surface_;
 		SwapChain swapChain_;
+		VkRenderPass renderPass_;
+		Pipeline pipeline_;
 
 		Context() : AbstractObject(),
+			engine_(nullptr),
 			window_(nullptr),
 			instance_(VK_NULL_HANDLE),
 			physicalDevice_(this),
 			device_(this),
 			surface_(VK_NULL_HANDLE),
 			swapChain_(this),
+			renderPass_(VK_NULL_HANDLE),
+			pipeline_(this),
 			debugMessenger_(VK_NULL_HANDLE)
 		{};
 
 	public:
+		Engine* engine();
 		GLFWwindow* window();
 		VkInstance& instance();
 		PhysicalDevice& physicalDevice();
 		Device& device();
 		VkSurfaceKHR& surface();
 		SwapChain& swapChain();
+		VkRenderPass& renderPass();
+		Pipeline& pipeline();
 
 	protected:
-		bool onInitialize(const char*, GLFWwindow* window);
+		bool onInitialize(Engine*, const char*, GLFWwindow* window);
 		bool onTerminate();
 		bool isVulkanSupported();
+		VkRenderPass createRenderPass();
 
 		static VkInstance createVulkanInstance(const char* appName = Context::defaultAppName);
 		static std::vector<const char*>& getRequiredExtensions();
