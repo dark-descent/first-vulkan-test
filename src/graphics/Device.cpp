@@ -50,7 +50,12 @@ namespace NovaEngine::Graphics
 
 				presentQueue_ = graphicsQueues_[0];
 
-				return true;
+				VkCommandPoolCreateInfo poolInfo = {};
+				poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+				poolInfo.queueFamilyIndex = queueFamilies.graphicsFamily.value();
+				poolInfo.flags = 0;
+
+				return vkCreateCommandPool(device_, &poolInfo, nullptr, &commandPool_) == VK_SUCCESS;
 			}
 		}
 		else
@@ -73,7 +78,7 @@ namespace NovaEngine::Graphics
 			};
 
 			const char* extensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
-			
+
 			VkDeviceCreateInfo createInfo = {};
 			createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 			createInfo.pQueueCreateInfos = createInfos;
@@ -90,7 +95,12 @@ namespace NovaEngine::Graphics
 
 				vkGetDeviceQueue(device_, presentQueueIndex, 0, &presentQueue_);
 
-				return true;
+				VkCommandPoolCreateInfo poolInfo = {};
+				poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+				poolInfo.queueFamilyIndex = queueFamilies.graphicsFamily.value();
+				poolInfo.flags = 0;
+
+				return vkCreateCommandPool(device_, &poolInfo, nullptr, &commandPool_) == VK_SUCCESS;
 			}
 
 		}
@@ -100,6 +110,7 @@ namespace NovaEngine::Graphics
 
 	bool Device::onTerminate()
 	{
+		vkDestroyCommandPool(device_, commandPool_, nullptr);
 		vkDestroyDevice(device_, nullptr);
 		return true;
 	}
@@ -113,5 +124,10 @@ namespace NovaEngine::Graphics
 	{
 		assert(index < graphicsQueues_.size());
 		return graphicsQueues_[index];
+	}
+
+	VkCommandPool& Device::commandPool()
+	{
+		return commandPool_;
 	}
 };

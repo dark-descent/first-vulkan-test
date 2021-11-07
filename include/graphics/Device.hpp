@@ -20,8 +20,9 @@ namespace NovaEngine::Graphics
 		VkDevice device_;
 		std::vector<VkQueue> graphicsQueues_;
 		VkQueue presentQueue_;
+		VkCommandPool commandPool_;
 
-		GFX_CTOR(Device), device_(VK_NULL_HANDLE), graphicsQueues_(), presentQueue_(VK_NULL_HANDLE) {}
+		GFX_CTOR(Device), device_(VK_NULL_HANDLE), graphicsQueues_(), presentQueue_(VK_NULL_HANDLE), commandPool_(VK_NULL_HANDLE) {}
 
 	protected:
 		bool onInitialize(DeviceConfig* config);
@@ -29,8 +30,8 @@ namespace NovaEngine::Graphics
 
 	public:
 		const std::vector<VkQueue>& graphicsQueues();
-
 		VkQueue getGraphicsQueue(uint32_t index);
+		VkCommandPool& commandPool();
 		
 		VkDevice operator*() { return device_; }
 
