@@ -6,10 +6,14 @@
 
 namespace NovaEngine
 {
+
+	constexpr size_t formatBufferSize = 512;
+
 	const char* Logger::DEFAULT_COLOR = "\033[39m\033[49m";
 	const char* Logger::INFO_COLOR = "\033[34m";
 	const char* Logger::WARN_COLOR = "\033[33m";
 	const char* Logger::ERROR_COLOR = "\033[31m";
+
 
 	std::unordered_map<std::string, Logger*> Logger::loggers_ = std::unordered_map<std::string, Logger*>();
 	std::queue<Logger::LogInfo> Logger::logQueue_;
@@ -66,7 +70,6 @@ namespace NovaEngine
 				else if (strncmp(foundName.c_str(), fileName.c_str(), fileName.size()) == 0)
 				{
 					size_t v = static_cast<size_t>(atoi(&foundName[fileName.size() + 1])) + 1;
-					std::cout << "v: " << v << std::endl;
 					if (v > version)
 						version = v;
 				}
@@ -154,18 +157,26 @@ namespace NovaEngine
 
 	void Logger::log(const char* str)
 	{
-		char buf[128];
-		sprintf(buf, "%s\n", str);
-		printf("%s", buf);
-		forward(buf);
+		log(std::string(str));
 	}
 
 	void Logger::log(std::string& str)
 	{
-		char buf[128];
-		sprintf(buf, "%s\n", str.c_str());
-		printf("%s", buf);
-		forward(buf);
+		char formatBuffer[formatBufferSize];
+
+		// prevents buffer overflow
+		if(str.size() > formatBufferSize)
+		{
+			str.resize(formatBufferSize - 2);
+			str[formatBufferSize - 5] = '.';
+			str[formatBufferSize - 4] = '.';
+			str[formatBufferSize - 3] = '.';
+			str[formatBufferSize - 2] = '\0';
+		}
+		
+		sprintf(formatBuffer, "%s\n", str.c_str());
+		printf("%s", formatBuffer);
+		forward(formatBuffer);
 	}
 
 	void Logger::forward(const char* str, bool newLine)

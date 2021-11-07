@@ -86,7 +86,7 @@ namespace NovaEngine
 		template<typename T>
 		void info(T str)
 		{
-			printf("%s[INFO]%s: ", INFO_COLOR, DEFAULT_COLOR);
+			printf("%s[INFO]%s ", INFO_COLOR, DEFAULT_COLOR);
 			forward("[INFO] ", true);
 			log(str);
 		}
@@ -94,7 +94,7 @@ namespace NovaEngine
 		template<typename T>
 		void warn(T str)
 		{
-			printf("%s[WARN]%s: ", WARN_COLOR, DEFAULT_COLOR);
+			printf("%s[WARN]%s ", WARN_COLOR, DEFAULT_COLOR);
 			forward("[WARN] ", true);
 			log(str);
 		}
@@ -102,7 +102,7 @@ namespace NovaEngine
 		template<typename T>
 		void error(T str)
 		{
-			printf("%s[ERROR]%s: ", ERROR_COLOR, DEFAULT_COLOR);
+			printf("%s[ERROR]%s ", ERROR_COLOR, DEFAULT_COLOR);
 			forward("[ERROR] ", true);
 			log(str);
 		}
@@ -110,7 +110,7 @@ namespace NovaEngine
 		template<typename T, typename... Ts>
 		void info(T str, Ts... rest)
 		{
-			printf("%s[INFO]%s: %s", INFO_COLOR, DEFAULT_COLOR, str);
+			printf("%s[INFO]%s %s", INFO_COLOR, DEFAULT_COLOR, str);
 			forward("[INFO] ", true);
 			forward(str);
 			logRest(rest...);
@@ -121,7 +121,7 @@ namespace NovaEngine
 		template<typename T, typename... Ts>
 		void warn(T str, Ts... rest)
 		{
-			printf("%s[WARN]%s: %s", WARN_COLOR, DEFAULT_COLOR, str);
+			printf("%s[WARN]%s %s", WARN_COLOR, DEFAULT_COLOR, str);
 			forward("[WARN] ", true);
 			forward(str);
 			logRest(rest...);
@@ -132,7 +132,7 @@ namespace NovaEngine
 		template<typename T, typename... Ts>
 		void error(T str, Ts... rest)
 		{
-			printf("%s[ERROR]%s: %s", ERROR_COLOR, DEFAULT_COLOR, str);
+			printf("%s[ERROR]%s %s", ERROR_COLOR, DEFAULT_COLOR, str);
 			forward("[ERROR] ", true);
 			forward(str);
 			logRest(rest...);
