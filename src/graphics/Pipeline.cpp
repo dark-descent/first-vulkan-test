@@ -174,6 +174,7 @@ namespace NovaEngine::Graphics
 		pipelineInfo.subpass = 0;
 		pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
 		pipelineInfo.basePipelineIndex = -1; // Optional
+		pipelineInfo.pDynamicState = &dynamicState;
 
 
 		bool success = vkCreateGraphicsPipelines(*context()->device(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline_) == VK_SUCCESS;
