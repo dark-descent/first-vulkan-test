@@ -19,12 +19,14 @@ namespace NovaEngine::Graphics
 		VkInstance instance_;
 		PhysicalDevice physicalDevice_;
 		Device device_;
+		VkSurfaceKHR surface_;
 
 		Context() : AbstractObject(),
 			window_(nullptr),
 			instance_(VK_NULL_HANDLE),
 			physicalDevice_(this),
 			device_(this),
+			surface_(VK_NULL_HANDLE),
 			debugMessenger_(VK_NULL_HANDLE)
 		{};
 
@@ -33,6 +35,7 @@ namespace NovaEngine::Graphics
 		VkInstance& instance();
 		PhysicalDevice& physicalDevice();
 		Device& device();
+		VkSurfaceKHR& surface();
 
 	protected:
 		bool onInitialize(const char*, GLFWwindow* window);
@@ -41,6 +44,7 @@ namespace NovaEngine::Graphics
 
 		static VkInstance createVulkanInstance(const char* appName = Context::defaultAppName);
 		static std::vector<const char*>& getRequiredExtensions();
+		static VkSurfaceKHR createSurface(VkInstance instance, GLFWwindow* window);
 
 	private:
 #ifdef DEBUG

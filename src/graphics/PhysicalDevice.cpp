@@ -9,7 +9,7 @@ namespace NovaEngine::Graphics
 		bool typeIntegrated = properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU;
 		bool typeCpu = properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_CPU;
 
-		if ((typeDiscrete || typeIntegrated || typeCpu) && queueFamilies.graphicsFamily.has_value())
+		if ((typeDiscrete || typeIntegrated || typeCpu) && queueFamilies.graphicsFamily.has_value() && queueFamilies.presentFamily.has_value())
 			return true;
 
 		return false;
@@ -42,17 +42,21 @@ namespace NovaEngine::Graphics
 			std::vector<VkQueueFamilyProperties> queueFamiliesList(queueFamilyCount);
 			vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamiliesList.data());
 
-			;
-
 			int i = 0;
 
 			for (const auto& queueFamily : queueFamiliesList)
 			{
 				if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
-				{
 					queueFamilies_.graphicsFamily = i;
+
+				VkBool32 presentSupport = false;
+				vkGetPhysicalDeviceSurfaceSupportKHR(device, i, context()->surface(), &presentSupport);
+
+				if (presentSupport)
+					queueFamilies_.presentFamily = i;
+
+				if(queueFamilies_.presentFamily.has_value() && queueFamilies_.graphicsFamily.has_value())
 					break;
-				}
 
 				i++;
 			}

@@ -27,6 +27,15 @@ namespace NovaEngine::Graphics
 			return false;
 
 		ON_DEBUG(VK_INIT(debugMessenger_, createDebugMessenger));
+
+		surface_ = createSurface(instance_, window);
+
+		if (surface_ == VK_NULL_HANDLE)
+		{
+			Logger::get()->error("Failed to create vulkan surface!");
+			return false;
+		}
+
 		INIT_GFX_OBJ_ARGS(physicalDevice_, nullptr);
 		INIT_GFX_OBJ_ARGS(device_, nullptr);
 
@@ -37,6 +46,7 @@ namespace NovaEngine::Graphics
 	{
 		device_.terminate();
 		physicalDevice_.terminate();
+		vkDestroySurfaceKHR(instance_, surface_, nullptr);
 		ON_DEBUG(destroyDebugMessenger());
 		vkDestroyInstance(instance_, nullptr);
 		return true;
@@ -47,6 +57,7 @@ namespace NovaEngine::Graphics
 	VkInstance& Context::instance() { return instance_; }
 	PhysicalDevice& Context::physicalDevice() { return physicalDevice_; }
 	Device& Context::device() { return device_; }
+	VkSurfaceKHR& Context::surface() { return surface_; }
 
 	bool Context::isVulkanSupported()
 	{
@@ -109,6 +120,16 @@ namespace NovaEngine::Graphics
 		VkInstance instance;
 		VK_CHECK(vkCreateInstance(&createInfo, nullptr, &instance));
 		return instance;
+	}
+
+
+	VkSurfaceKHR Context::createSurface(VkInstance instance, GLFWwindow* window)
+	{
+		VkSurfaceKHR surface = VK_NULL_HANDLE;
+		if (glfwCreateWindowSurface(instance, window, nullptr, &surface) == VK_SUCCESS)
+			return surface;
+		return VK_NULL_HANDLE;
+
 	}
 
 #ifdef DEBUG

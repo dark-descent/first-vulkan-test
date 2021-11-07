@@ -19,8 +19,9 @@ namespace NovaEngine::Graphics
 
 		VkDevice device_;
 		std::vector<VkQueue> graphicsQueues_;
+		VkQueue presentQueue_;
 
-		GFX_CTOR(Device), device_(VK_NULL_HANDLE) {}
+		GFX_CTOR(Device), device_(VK_NULL_HANDLE), graphicsQueues_(), presentQueue_(VK_NULL_HANDLE) {}
 
 	protected:
 		bool onInitialize(DeviceConfig* config);

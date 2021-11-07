@@ -11,6 +11,7 @@ namespace NovaEngine::Graphics
 	struct QueueFamilies
 	{
 		std::optional<uint32_t> graphicsFamily;
+		std::optional<uint32_t> presentFamily;
 	};
 
 	typedef bool(*PhysicalDeviceConfigCallback)(VkPhysicalDeviceProperties& properties, VkPhysicalDeviceFeatures& features, QueueFamilies& queueFamilies);
