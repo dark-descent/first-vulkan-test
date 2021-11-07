@@ -229,6 +229,7 @@ namespace NovaEngine
 			while (gameWindow.isOpen())
 			{
 				glfwPollEvents();
+				graphicsManager.draw();
 			}
 		}
 	}

@@ -11,7 +11,7 @@ namespace NovaEngine::Graphics
 	{
 	private:
 		static const char* defaultAppName;
-		
+
 		Context ctx_;
 
 		ENGINE_SUB_SYSTEM_CTOR(GraphicsManager), ctx_() {};
@@ -20,6 +20,9 @@ namespace NovaEngine::Graphics
 		bool onInitialize(GLFWwindow* window);
 		bool onTerminate();
 
+	public:
+		void draw();
+		
 		friend class NovaEngine::Engine;
 	};
 };

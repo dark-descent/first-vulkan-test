@@ -17,4 +17,15 @@ namespace NovaEngine::Graphics
 		ctx_.terminate();
 		return true;
 	}
+
+	size_t i = 0;
+
+	void GraphicsManager::draw()
+	{
+		ctx_.device_.record(i++ % 2, []()
+		{
+			
+		});
+		printf("draw tick\n");
+	}
 };

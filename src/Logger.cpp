@@ -7,7 +7,7 @@
 namespace NovaEngine
 {
 
-	constexpr size_t formatBufferSize = 512;
+	constexpr size_t formatBufferSize = 1024;
 
 	const char* Logger::DEFAULT_COLOR = "\033[39m\033[49m";
 	const char* Logger::INFO_COLOR = "\033[34m";

@@ -145,7 +145,7 @@ namespace NovaEngine::Graphics
 	{
 		for (VkFramebuffer b : framebuffers_)
 			vkDestroyFramebuffer(*ctx_->device(), b, nullptr);
-	
+
 		for (const VkImageView& v : imageViews_)
 			vkDestroyImageView(*ctx_->device(), v, nullptr);
 
@@ -154,26 +154,13 @@ namespace NovaEngine::Graphics
 		return true;
 	}
 
-
-	VkSurfaceCapabilitiesKHR& SwapChain::capabilities()
-	{
-		return capabilities_;
-	}
-
-	VkSurfaceFormatKHR& SwapChain::format()
-	{
-		return format_.value();
-	}
-
-	VkPresentModeKHR& SwapChain::presentMode()
-	{
-		return presentMode_.value();
-	}
-
-	VkExtent2D& SwapChain::extent()
-	{
-		return extent_;
-	}
+	VkSurfaceCapabilitiesKHR& SwapChain::capabilities() { return capabilities_; }
+	VkSurfaceFormatKHR& SwapChain::format() { return format_.value(); }
+	VkPresentModeKHR& SwapChain::presentMode() { return presentMode_.value(); }
+	VkExtent2D& SwapChain::extent() { return extent_; }
+	std::vector<VkImage>& SwapChain::images() { return images_; };
+	std::vector<VkImageView>& SwapChain::imageViews() { return imageViews_; };
+	std::vector<VkFramebuffer>& SwapChain::framebuffers() { return framebuffers_; };
 
 	bool SwapChain::initFrameBuffers()
 	{

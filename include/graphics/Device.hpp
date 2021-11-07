@@ -7,6 +7,8 @@
 
 namespace NovaEngine::Graphics
 {
+	typedef void(*RecordCallback)();
+
 	struct DeviceConfig
 	{
 		uint32_t queueCount;
@@ -21,8 +23,15 @@ namespace NovaEngine::Graphics
 		std::vector<VkQueue> graphicsQueues_;
 		VkQueue presentQueue_;
 		VkCommandPool commandPool_;
+		std::vector<VkCommandBuffer> commandBuffers_;
 
-		GFX_CTOR(Device), device_(VK_NULL_HANDLE), graphicsQueues_(), presentQueue_(VK_NULL_HANDLE), commandPool_(VK_NULL_HANDLE) {}
+		GFX_CTOR(Device),
+			device_(VK_NULL_HANDLE),
+			graphicsQueues_(),
+			presentQueue_(VK_NULL_HANDLE),
+			commandPool_(VK_NULL_HANDLE),
+			commandBuffers_()
+		{}
 
 	protected:
 		bool onInitialize(DeviceConfig* config);
@@ -32,9 +41,13 @@ namespace NovaEngine::Graphics
 		const std::vector<VkQueue>& graphicsQueues();
 		VkQueue getGraphicsQueue(uint32_t index);
 		VkCommandPool& commandPool();
-		
+
+		bool initCommandBuffers();
+		VkCommandBuffer getCommandBuffer(size_t index);
+
 		VkDevice operator*() { return device_; }
 
+		bool record(size_t frameIndex, RecordCallback callback);
 	};
 
 }

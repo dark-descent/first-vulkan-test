@@ -38,6 +38,9 @@ namespace NovaEngine::Graphics
 		VkSurfaceFormatKHR& format();
 		VkPresentModeKHR& presentMode();
 		VkExtent2D& extent();
+		std::vector<VkImage>& images();
+		std::vector<VkImageView>& imageViews();
+		std::vector<VkFramebuffer>& framebuffers();
 
 		bool initFrameBuffers();
 

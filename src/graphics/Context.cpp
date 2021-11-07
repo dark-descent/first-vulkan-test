@@ -44,18 +44,23 @@ namespace NovaEngine::Graphics
 
 		VK_INIT(renderPass_, createRenderPass);
 
-		if(!pipeline_.initialize("unlit", "unlit"))
+		if (!pipeline_.initialize("unlit", "unlit"))
 		{
 			Logger::get()->error("Could not initialize pipeline!");
 			return false;
 		}
 
-		if(!swapChain_.initFrameBuffers())
+		if (!swapChain_.initFrameBuffers())
 		{
 			Logger::get()->error("Could not initialize frame buffers!");
 			return false;
 		}
 
+		if (!device_.initCommandBuffers())
+		{
+			Logger::get()->error("Could not initialize command buffers!");
+			return false;
+		}
 
 		return true;
 	}
@@ -120,7 +125,7 @@ namespace NovaEngine::Graphics
 		renderPassInfo.pSubpasses = &subpass;
 
 		VkRenderPass renderPass;
-		
+
 		if (vkCreateRenderPass(*device(), &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS)
 		{
 			Logger::get()->error("Failed to create render pass!");
