@@ -26,6 +26,7 @@
 #include <csignal>
 #include <cstdlib>
 #include <stdlib.h>
+#include <cassert>
 
 #include <libgen.h>
 #include <unistd.h>
@@ -42,13 +43,13 @@
 
 #pragma region DEFINES
 
-#ifdef NDEBUG
+#ifdef DEBUG
 #define CHECK(expr, msg) { if(!expr) { Logger::get()->error(msg); return false; } else { Logger::get()->info(#expr" success!"); } }
 #else
 #define CHECK(expr, msg) if(!expr) return false;
 #endif
 
-#ifdef NDEBUG
+#ifdef DEBUG
 #define ON_DEBUG(expr) expr
 #else
 #define ON_DEBUG(expr)

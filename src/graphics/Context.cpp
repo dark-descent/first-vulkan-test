@@ -6,12 +6,14 @@
 #define VK_INIT(var, expr) { var = expr(); if(var == VK_NULL_HANDLE) { Logger::get()->error(#var " = " #expr "() FAILED!"); return false; } }
 #define VK_INIT_ARGS(var, expr, args) { var = expr(args); if(var == VK_NULL_HANDLE) { Logger::get()->error(#var " = " #expr "(" #args ") FAILED!"); return false; } }
 #define VK_CHECK(expr) { if(expr != VK_SUCCESS) { Logger::get()->error(#expr " Failed!"); return VK_NULL_HANDLE; } }
+#define INIT_GFX_OBJ(obj) { if(!obj.initialize()) { Logger::get()->error(#obj ".initialize() Failed!"); return false; } }
+#define INIT_GFX_OBJ_ARGS(obj, args) { if(!obj.initialize(args)) { Logger::get()->error(#obj ".initialize("#args") Failed!"); return false; } }
 
 namespace NovaEngine::Graphics
 {
 	const char* Context::defaultAppName = "Missing App Name";
 
-#ifdef NDEBUG
+#ifdef DEBUG
 	std::vector<const char*> Context::validationLayers = {
 		"VK_LAYER_KHRONOS_validation"
 	};
@@ -21,18 +23,37 @@ namespace NovaEngine::Graphics
 	{
 		VK_INIT_ARGS(instance_, createVulkanInstance, name);
 
+		if (!isVulkanSupported())
+			return false;
+
 		ON_DEBUG(VK_INIT(debugMessenger_, createDebugMessenger));
+		INIT_GFX_OBJ_ARGS(physicalDevice_, nullptr);
+		INIT_GFX_OBJ_ARGS(device_, nullptr);
 
 		return true;
 	}
 
 	bool Context::onTerminate()
 	{
+		device_.terminate();
+		physicalDevice_.terminate();
 		ON_DEBUG(destroyDebugMessenger());
 		vkDestroyInstance(instance_, nullptr);
 		return true;
 	}
 
+
+	GLFWwindow* Context::window() { return window_; }
+	VkInstance& Context::instance() { return instance_; }
+	PhysicalDevice& Context::physicalDevice() { return physicalDevice_; }
+	Device& Context::device() { return device_; }
+
+	bool Context::isVulkanSupported()
+	{
+		uint32_t deviceCount = 0;
+		vkEnumeratePhysicalDevices(instance_, &deviceCount, nullptr);
+		return deviceCount != 0;
+	}
 
 #pragma region Static Create Methods 
 
@@ -49,7 +70,7 @@ namespace NovaEngine::Graphics
 
 		requiredExtensions = std::vector<const char*>(glfwExtensions, glfwExtensions + glfwExtensionCount);
 
-#ifdef NDEBUG
+#ifdef DEBUG
 		requiredExtensions.value().push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 #endif
 
@@ -58,7 +79,7 @@ namespace NovaEngine::Graphics
 
 	VkInstance Context::createVulkanInstance(const char* appName)
 	{
-#ifdef NDEBUG
+#ifdef DEBUG
 		if (!hasValidationLayerSupport())
 			return VK_NULL_HANDLE;
 #endif
@@ -78,7 +99,7 @@ namespace NovaEngine::Graphics
 		createInfo.pApplicationInfo = &appInfo;
 		createInfo.enabledExtensionCount = getRequiredExtensions().size();
 		createInfo.ppEnabledExtensionNames = getRequiredExtensions().data();
-#ifdef NDEBUG
+#ifdef DEBUG
 		createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
 		createInfo.ppEnabledLayerNames = validationLayers.data();
 #else
@@ -90,7 +111,7 @@ namespace NovaEngine::Graphics
 		return instance;
 	}
 
-#ifdef NDEBUG
+#ifdef DEBUG
 
 	bool Context::hasValidationLayerSupport()
 	{
@@ -132,7 +153,7 @@ namespace NovaEngine::Graphics
 
 	VKAPI_ATTR VkBool32 VKAPI_CALL Context::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
 	{
-		Logger::get()->info("validation layer: ", pCallbackData->pMessage);
+		Logger::get()->warn("validation layer: ", pCallbackData->pMessage);
 		return VK_FALSE;
 	}
 
@@ -150,7 +171,7 @@ namespace NovaEngine::Graphics
 		VkDebugUtilsMessengerEXT debugMesenger;
 
 		VK_CHECK(func(instance_, &createInfo, nullptr, &debugMesenger));
-		
+
 		return debugMesenger;
 	}
 

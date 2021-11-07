@@ -25,7 +25,6 @@ namespace NovaEngine
 		static bool shouldTerminate_;
 
 		static std::string& date();
-		static void onAbortHandler(int n);
 
 	public:
 		static Logger* get(const char* name = nullptr);

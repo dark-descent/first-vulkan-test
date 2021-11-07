@@ -18,16 +18,6 @@ namespace NovaEngine
 	bool Logger::shouldTerminate_ = false;
 	std::optional<std::thread> Logger::logHandlerThread_;
 
-	void Logger::onAbortHandler(int n)
-	{
-		std::cout << "ON ABORT!" << std::endl;
-		for (std::pair<std::string, Logger*> p : Logger::loggers_)
-		{
-			p.second->error("TERMINATED !!!");
-			p.second->terminate();
-		}
-	}
-
 	std::string& Logger::date()
 	{
 		static std::optional<std::string> dateString;
@@ -52,8 +42,6 @@ namespace NovaEngine
 		{
 			if (!std::filesystem::exists(logPath))
 				std::filesystem::create_directory(logPath);
-
-			std::signal(SIGABRT, &onAbortHandler);
 
 			isInitialized = true;
 		}

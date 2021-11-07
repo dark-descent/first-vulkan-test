@@ -6,7 +6,8 @@ namespace NovaEngine::Graphics
 {
 	bool GraphicsManager::onInitialize(GLFWwindow* window)
 	{
-		ctx_.initialize(engine()->configManager.getConfig()->name.c_str(), window);
+		if(!ctx_.initialize(engine()->configManager.getConfig()->name.c_str(), window))
+			return false;
 
 		return true;
 	}

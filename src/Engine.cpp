@@ -13,12 +13,6 @@ namespace NovaEngine
 
 		std::vector<Engine*> engineInstances_;
 
-		extern "C" void onAbortHandler(int signal_number)
-		{
-			for (Engine* e : engineInstances_)
-				e->terminate();
-		}
-
 		SCRIPT_METHOD(onEngineConfigure)
 		{
 			v8::Isolate* isolate_ = args.GetIsolate();
@@ -113,9 +107,6 @@ namespace NovaEngine
 
 	Engine::Engine() : AbstractObject(), isRunning_(false), assetManager(this), scriptManager(this), configManager(this), graphicsManager(this), gameWindow(this)
 	{
-		if (engineInstances_.size() == 0)
-			std::signal(SIGABRT, &onAbortHandler);
-		engineInstances_.push_back(this);
 	}
 
 	bool Engine::initSubSystem(const char* name, SubSystem<>* subSystem)

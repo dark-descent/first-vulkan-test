@@ -3,6 +3,8 @@
 
 #include "AbstractObject.hpp"
 #include "framework.hpp"
+#include "PhysicalDevice.hpp"
+#include "Device.hpp"
 
 namespace NovaEngine::Graphics
 {
@@ -15,33 +17,45 @@ namespace NovaEngine::Graphics
 
 		GLFWwindow* window_;
 		VkInstance instance_;
+		PhysicalDevice physicalDevice_;
+		Device device_;
 
 		Context() : AbstractObject(),
 			window_(nullptr),
 			instance_(VK_NULL_HANDLE),
+			physicalDevice_(this),
+			device_(this),
 			debugMessenger_(VK_NULL_HANDLE)
 		{};
+
+	public:
+		GLFWwindow* window();
+		VkInstance& instance();
+		PhysicalDevice& physicalDevice();
+		Device& device();
 
 	protected:
 		bool onInitialize(const char*, GLFWwindow* window);
 		bool onTerminate();
+		bool isVulkanSupported();
 
 		static VkInstance createVulkanInstance(const char* appName = Context::defaultAppName);
 		static std::vector<const char*>& getRequiredExtensions();
 
-private:
-#ifdef NDEBUG
+	private:
+#ifdef DEBUG
 		VkDebugUtilsMessengerEXT debugMessenger_;
 
 		VkDebugUtilsMessengerEXT createDebugMessenger();
 		void destroyDebugMessenger();
-		
+
 		static std::vector<const char*> validationLayers;
 		static bool hasValidationLayerSupport();
 		static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
 #endif
 
 		friend class NovaEngine::Graphics::GraphicsManager;
+		friend class NovaEngine::Graphics::PhysicalDevice;
 	};
 };
 
