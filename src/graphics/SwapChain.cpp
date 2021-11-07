@@ -143,6 +143,9 @@ namespace NovaEngine::Graphics
 
 	bool SwapChain::onTerminate()
 	{
+		for (VkFramebuffer b : framebuffers_)
+			vkDestroyFramebuffer(*ctx_->device(), b, nullptr);
+	
 		for (const VkImageView& v : imageViews_)
 			vkDestroyImageView(*ctx_->device(), v, nullptr);
 
@@ -175,7 +178,7 @@ namespace NovaEngine::Graphics
 	bool SwapChain::initFrameBuffers()
 	{
 		framebuffers_.resize(imageViews_.size());
-		
+
 		for (size_t i = 0; i < imageViews_.size(); i++) {
 			VkImageView attachments[] = {
 				imageViews_[i]
