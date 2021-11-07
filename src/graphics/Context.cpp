@@ -177,7 +177,16 @@ namespace NovaEngine::Graphics
 
 	VKAPI_ATTR VkBool32 VKAPI_CALL Context::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
 	{
-		Logger::get()->warn("validation layer: ", pCallbackData->pMessage);
+		if(strncmp(pCallbackData->pMessage, "Device Extension: ", 18) == 0)
+			return VK_FALSE;
+
+		if (messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT || messageSeverity == messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT)
+			Logger::get()->info(pCallbackData->pMessage);
+		if (messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
+			Logger::get()->warn(pCallbackData->pMessage);
+		if (messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
+			Logger::get()->error(pCallbackData->pMessage);
+
 		return VK_FALSE;
 	}
 
