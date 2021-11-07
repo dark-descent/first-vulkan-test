@@ -38,12 +38,14 @@ namespace NovaEngine::Graphics
 
 		INIT_GFX_OBJ_ARGS(physicalDevice_, nullptr);
 		INIT_GFX_OBJ_ARGS(device_, nullptr);
+		INIT_GFX_OBJ(swapChain_);
 
 		return true;
 	}
 
 	bool Context::onTerminate()
 	{
+		swapChain_.terminate();
 		device_.terminate();
 		physicalDevice_.terminate();
 		vkDestroySurfaceKHR(instance_, surface_, nullptr);
@@ -58,6 +60,7 @@ namespace NovaEngine::Graphics
 	PhysicalDevice& Context::physicalDevice() { return physicalDevice_; }
 	Device& Context::device() { return device_; }
 	VkSurfaceKHR& Context::surface() { return surface_; }
+	SwapChain& Context::swapChain() { return swapChain_; }
 
 	bool Context::isVulkanSupported()
 	{

@@ -41,11 +41,16 @@ namespace NovaEngine::Graphics
 
 		};
 
+		const char* extensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+
 		VkDeviceCreateInfo createInfo = {};
 		createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 		createInfo.pQueueCreateInfos = createInfos;
 		createInfo.queueCreateInfoCount = 2;
 		createInfo.pEnabledFeatures = &deviceFeatures;
+		createInfo.enabledExtensionCount = 1;
+		createInfo.ppEnabledExtensionNames = &extensions;
+
 
 		if (vkCreateDevice(*pDev, &createInfo, nullptr, &device_) == VK_SUCCESS)
 		{

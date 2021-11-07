@@ -21,6 +21,7 @@ namespace NovaEngine::Graphics
 	private:
 		static bool defaultConfigCallback(VkPhysicalDeviceProperties& properties, VkPhysicalDeviceFeatures& features, QueueFamilies& queueFamilies);
 		static uint32_t getQueueFamilies(VkPhysicalDevice& dev);
+		static bool checkSwapchainSupport(VkPhysicalDevice dev, VkSurfaceKHR surface);
 
 		VkPhysicalDevice physicalDevice_;
 		QueueFamilies queueFamilies_;

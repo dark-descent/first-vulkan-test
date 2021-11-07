@@ -3,8 +3,9 @@
 
 #include "AbstractObject.hpp"
 #include "framework.hpp"
-#include "PhysicalDevice.hpp"
-#include "Device.hpp"
+#include "graphics/PhysicalDevice.hpp"
+#include "graphics/Device.hpp"
+#include "graphics/SwapChain.hpp"
 
 namespace NovaEngine::Graphics
 {
@@ -20,6 +21,7 @@ namespace NovaEngine::Graphics
 		PhysicalDevice physicalDevice_;
 		Device device_;
 		VkSurfaceKHR surface_;
+		SwapChain swapChain_;
 
 		Context() : AbstractObject(),
 			window_(nullptr),
@@ -27,6 +29,7 @@ namespace NovaEngine::Graphics
 			physicalDevice_(this),
 			device_(this),
 			surface_(VK_NULL_HANDLE),
+			swapChain_(this),
 			debugMessenger_(VK_NULL_HANDLE)
 		{};
 
@@ -36,6 +39,7 @@ namespace NovaEngine::Graphics
 		PhysicalDevice& physicalDevice();
 		Device& device();
 		VkSurfaceKHR& surface();
+		SwapChain& swapChain();
 
 	protected:
 		bool onInitialize(const char*, GLFWwindow* window);

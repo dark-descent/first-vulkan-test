@@ -3,13 +3,13 @@
 
 namespace NovaEngine::Graphics
 {
+
 	bool PhysicalDevice::defaultConfigCallback(VkPhysicalDeviceProperties& properties, VkPhysicalDeviceFeatures& features, QueueFamilies& queueFamilies)
 	{
 		bool typeDiscrete = properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
 		bool typeIntegrated = properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU;
-		bool typeCpu = properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_CPU;
 
-		if ((typeDiscrete || typeIntegrated || typeCpu) && queueFamilies.graphicsFamily.has_value() && queueFamilies.presentFamily.has_value())
+		if ((typeDiscrete || typeIntegrated) && queueFamilies.graphicsFamily.has_value() && queueFamilies.presentFamily.has_value())
 			return true;
 
 		return false;
@@ -30,6 +30,10 @@ namespace NovaEngine::Graphics
 
 		for (auto device : devices)
 		{
+			// check for swapchain support
+			if (!checkSwapchainSupport(device, ctx_->surface_))
+				continue;
+
 			VkPhysicalDeviceProperties deviceProperties;
 			vkGetPhysicalDeviceProperties(device, &deviceProperties);
 
@@ -55,7 +59,7 @@ namespace NovaEngine::Graphics
 				if (presentSupport)
 					queueFamilies_.presentFamily = i;
 
-				if(queueFamilies_.presentFamily.has_value() && queueFamilies_.graphicsFamily.has_value())
+				if (queueFamilies_.presentFamily.has_value() && queueFamilies_.graphicsFamily.has_value())
 					break;
 
 				i++;
@@ -79,5 +83,34 @@ namespace NovaEngine::Graphics
 	const QueueFamilies& PhysicalDevice::queueFamilies()
 	{
 		return queueFamilies_;
+	}
+
+	bool PhysicalDevice::checkSwapchainSupport(VkPhysicalDevice dev, VkSurfaceKHR surface)
+	{
+		uint32_t extensionCount;
+		vkEnumerateDeviceExtensionProperties(dev, nullptr, &extensionCount, nullptr);
+
+		std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+		vkEnumerateDeviceExtensionProperties(dev, nullptr, &extensionCount, availableExtensions.data());
+
+		for (const VkExtensionProperties& extension : availableExtensions)
+		{
+			if (strcmp(VK_KHR_SWAPCHAIN_EXTENSION_NAME, extension.extensionName) == 0)
+			{
+				VkSurfaceCapabilitiesKHR capabilities;
+				vkGetPhysicalDeviceSurfaceCapabilitiesKHR(dev, surface, &capabilities);
+
+				uint32_t formatCount;
+				vkGetPhysicalDeviceSurfaceFormatsKHR(dev, surface, &formatCount, nullptr);
+
+				uint32_t presentModeCount;
+				vkGetPhysicalDeviceSurfacePresentModesKHR(dev, surface, &presentModeCount, nullptr);
+
+				if (presentModeCount != 0 && formatCount != 0)
+					return true;
+			}
+		}
+
+		return false;
 	}
 };
