@@ -189,6 +189,7 @@ namespace NovaEngine::Graphics
 
 	bool Pipeline::onTerminate()
 	{
+		vkDestroyPipeline(*context()->device(), pipeline_, nullptr);
 		vkDestroyPipelineLayout(*context()->device(), layout_, nullptr);
 		return true;
 	}
