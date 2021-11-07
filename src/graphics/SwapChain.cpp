@@ -107,12 +107,47 @@ namespace NovaEngine::Graphics
 		createInfo.clipped = VK_TRUE;
 		createInfo.oldSwapchain = VK_NULL_HANDLE;
 
-		return vkCreateSwapchainKHR(*ctx_->device(), &createInfo, nullptr, &swapChain_) == VK_SUCCESS;
+		VkDevice d = *ctx_->device();
+
+		if (vkCreateSwapchainKHR(d, &createInfo, nullptr, &swapChain_) != VK_SUCCESS)
+			return false;
+
+		vkGetSwapchainImagesKHR(d, swapChain_, &imageCount, nullptr);
+		images_.resize(imageCount);
+		vkGetSwapchainImagesKHR(d, swapChain_, &imageCount, images_.data());
+
+		imageViews_.resize(imageCount);
+		for (size_t i = 0; i < imageCount; i++)
+		{
+			VkImageViewCreateInfo createInfo = {};
+			createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+			createInfo.image = images_[i];
+			createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+			createInfo.format = format().format;
+			createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+			createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+			createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+			createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+			createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			createInfo.subresourceRange.baseMipLevel = 0;
+			createInfo.subresourceRange.levelCount = 1;
+			createInfo.subresourceRange.baseArrayLayer = 0;
+			createInfo.subresourceRange.layerCount = 1;
+
+			if (vkCreateImageView(d, &createInfo, nullptr, &imageViews_[i]) != VK_SUCCESS)
+				return false;
+		}
+
+		return true;
 	}
 
 	bool SwapChain::onTerminate()
 	{
+		for (const VkImageView& v : imageViews_)
+        	vkDestroyImageView(*ctx_->device(), v, nullptr);
+
 		vkDestroySwapchainKHR(*ctx_->device(), swapChain_, nullptr);
+		
 		return true;
 	}
 

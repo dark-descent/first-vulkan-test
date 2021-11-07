@@ -14,6 +14,8 @@ namespace NovaEngine::Graphics
 		std::optional<VkPresentModeKHR> presentMode_;
 		VkExtent2D extent_; 
 		VkSwapchainKHR swapChain_;
+		std::vector<VkImage> images_;
+		std::vector<VkImageView> imageViews_;
 
 		GFX_CTOR(SwapChain),
 			capabilities_(),
@@ -31,7 +33,7 @@ namespace NovaEngine::Graphics
 		VkPresentModeKHR& presentMode();
 		VkExtent2D& extent();
 
-		VkSwapchainKHR& operator*() { return swapChain_; }
+		VkSwapchainKHR operator*() { return swapChain_; }
 
 	};
 };
