@@ -23,43 +23,76 @@ namespace NovaEngine::Graphics
 
 		VkPhysicalDeviceFeatures deviceFeatures = {};
 
-		VkDeviceQueueCreateInfo createInfos[] = {
-			/*graphicsQueueCreateInfo*/
-			{
+		if (graphicsQueueIndex == presentQueueIndex)
+		{
+			VkDeviceQueueCreateInfo createInfos = {
 				.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
 				.queueFamilyIndex = graphicsQueueIndex,
 				.queueCount = config->queueCount,
 				.pQueuePriorities = &queuePriority,
-			},
-			/*presentQueueCreateInfo*/
+			};
+
+			const char* extensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+			// pCreateInfo->pQueueCreateInfos[1].queueFamilyIndex (=0) is not unique and was also used in pCreateInfo->pQueueCreateInfos[0]
+
+			VkDeviceCreateInfo createInfo = {};
+			createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+			createInfo.pQueueCreateInfos = &createInfos;
+			createInfo.queueCreateInfoCount = 1;
+			createInfo.pEnabledFeatures = &deviceFeatures;
+			createInfo.enabledExtensionCount = 1;
+			createInfo.ppEnabledExtensionNames = &extensions;
+
+			if (vkCreateDevice(*pDev, &createInfo, nullptr, &device_) == VK_SUCCESS)
 			{
-				.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-				.queueFamilyIndex = presentQueueIndex,
-				.queueCount = 1,
-				.pQueuePriorities = &queuePriority
-			},
+				for (size_t i = 0; i < config->queueCount; i++)
+					vkGetDeviceQueue(device_, graphicsQueueIndex, i, &graphicsQueues_[i]);
 
-		};
+				presentQueue_ = graphicsQueues_[0];
 
-		const char* extensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
-
-		VkDeviceCreateInfo createInfo = {};
-		createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-		createInfo.pQueueCreateInfos = createInfos;
-		createInfo.queueCreateInfoCount = 2;
-		createInfo.pEnabledFeatures = &deviceFeatures;
-		createInfo.enabledExtensionCount = 1;
-		createInfo.ppEnabledExtensionNames = &extensions;
-
-
-		if (vkCreateDevice(*pDev, &createInfo, nullptr, &device_) == VK_SUCCESS)
+				return true;
+			}
+		}
+		else
 		{
-			for (size_t i = 0; i < config->queueCount; i++)
-				vkGetDeviceQueue(device_, graphicsQueueIndex, i, &graphicsQueues_[i]);
+			VkDeviceQueueCreateInfo createInfos[] = {
+				/*graphicsQueueCreateInfo*/
+				{
+					.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+					.queueFamilyIndex = graphicsQueueIndex,
+					.queueCount = config->queueCount,
+					.pQueuePriorities = &queuePriority,
+				},
+				/*presentQueueCreateInfo*/
+				{
+					.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+					.queueFamilyIndex = presentQueueIndex,
+					.queueCount = 1,
+					.pQueuePriorities = &queuePriority
+				},
+			};
 
-			vkGetDeviceQueue(device_, presentQueueIndex, 0, &presentQueue_);
+			const char* extensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 			
-			return true;
+			VkDeviceCreateInfo createInfo = {};
+			createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+			createInfo.pQueueCreateInfos = createInfos;
+			createInfo.queueCreateInfoCount = 2;
+			createInfo.pEnabledFeatures = &deviceFeatures;
+			createInfo.enabledExtensionCount = 1;
+			createInfo.ppEnabledExtensionNames = &extensions;
+
+
+			if (vkCreateDevice(*pDev, &createInfo, nullptr, &device_) == VK_SUCCESS)
+			{
+				for (size_t i = 0; i < config->queueCount; i++)
+					vkGetDeviceQueue(device_, graphicsQueueIndex, i, &graphicsQueues_[i]);
+
+				vkGetDeviceQueue(device_, presentQueueIndex, 0, &presentQueue_);
+
+				return true;
+			}
+
 		}
 
 		return false;
