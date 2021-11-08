@@ -9,6 +9,8 @@ Engine.onLoad(async (configure) =>
 			minHeight: 480,
 			resizable: true,
 			maximized: true,
+			width: 1920,
+			height: 1080,
 			hidden: true
 		},
 	});

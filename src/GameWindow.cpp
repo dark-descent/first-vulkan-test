@@ -7,19 +7,19 @@ namespace NovaEngine
 {
 	bool GameWindow::isGlfwInitialized_ = false;
 
-	GameWindow::GameWindow(Engine* engine): engine_(engine), window_(nullptr)
+	GameWindow::GameWindow(Engine* engine) : engine_(engine), window_(nullptr)
 	{
-		if(!isGlfwInitialized_)
+		if (!isGlfwInitialized_)
 		{
 			isGlfwInitialized_ = glfwInit() != GLFW_FALSE;
-			if(!isGlfwInitialized_)
+			if (!isGlfwInitialized_)
 				throw "Could not initialize GLFW!";
 		}
 	}
 
 	GameWindow::~GameWindow()
 	{
-		if(isGlfwInitialized_)
+		if (isGlfwInitialized_)
 		{
 			Logger::get()->info("terminating GLFW!...");
 			glfwTerminate();
@@ -40,8 +40,7 @@ namespace NovaEngine
 
 			if (window_ == nullptr)
 			{
-				Logger::get()->error("Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.");
-				glfwTerminate();
+				Logger::get()->error("Failed to open GLFW window.");
 				return false;
 			}
 
@@ -70,7 +69,7 @@ namespace NovaEngine
 
 	void GameWindow::close()
 	{
-		if(window_ != nullptr)
+		if (window_ != nullptr)
 		{
 			Logger::get()->info("window::close()...");
 			glfwDestroyWindow(window_);

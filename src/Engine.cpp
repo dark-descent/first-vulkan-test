@@ -1,8 +1,6 @@
 #include "Engine.hpp"
 #include "Logger.hpp"
 
-#include "Test.hpp"
-
 #define CHECK_REJECT(subSystem, rejector, msg) if(!subSystem) { rejector(msg); Logger::get()->error(#subSystem ":" #rejector " -> " msg); return false; }
 
 namespace NovaEngine
