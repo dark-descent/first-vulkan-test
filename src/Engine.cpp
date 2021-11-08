@@ -1,12 +1,16 @@
 #include "Engine.hpp"
 #include "Logger.hpp"
 
+#include "Test.hpp"
+
 #define CHECK_REJECT(subSystem, rejector, msg) if(!subSystem) { rejector(msg); Logger::get()->error(#subSystem ":" #rejector " -> " msg); return false; }
 
 namespace NovaEngine
 {
 	namespace
 	{
+		// VulkanTest test;
+		
 		v8::Global<v8::Promise::Resolver> configurePromiseResolver_;
 		v8::Global<v8::Function> onLoadCallback_;
 		v8::Global<v8::Object> configuredValue_;
@@ -246,6 +250,10 @@ namespace NovaEngine
 	{
 		if (isRunning_)
 			stop();
+
+		// test.cleanup();
+
+		graphicsManager.terminate();
 
 		configurePromiseResolver_.Reset();
 		onLoadCallback_.Reset();

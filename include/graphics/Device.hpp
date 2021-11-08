@@ -41,6 +41,7 @@ namespace NovaEngine::Graphics
 		const std::vector<VkQueue>& graphicsQueues();
 		VkQueue getGraphicsQueue(uint32_t index);
 		VkCommandPool& commandPool();
+		VkQueue& presentQueue();
 
 		bool initCommandBuffers();
 		VkCommandBuffer getCommandBuffer(size_t index);

@@ -79,7 +79,7 @@ out/assets/%.frag.spv: %.frag
 
 run: test-game
 	@echo "[starting game]\n"
-	DRI_PRIME=0 $(TEST_GAME_OUT)/$(ENGINE_NAME) Game.js
+	@cd $(TEST_GAME_OUT) && DRI_PRIME=0 ./$(ENGINE_NAME) Game.js
 	@echo "\n[game stopped]"
 
 watch-ts:

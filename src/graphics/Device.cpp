@@ -155,6 +155,11 @@ namespace NovaEngine::Graphics
 		return commandBuffers_[index];
 	}
 
+	VkQueue& Device::presentQueue()
+	{
+		return presentQueue_;
+	}
+
 
 	bool Device::record(size_t frameIndex, RecordCallback callback)
 	{

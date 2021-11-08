@@ -52,6 +52,7 @@ namespace NovaEngine::Graphics
 		VkInstance& instance();
 		PhysicalDevice& physicalDevice();
 		Device& device();
+		Device* devicePtr();
 		VkSurfaceKHR& surface();
 		SwapChain& swapChain();
 		VkRenderPass& renderPass();
