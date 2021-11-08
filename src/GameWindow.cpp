@@ -19,12 +19,7 @@ namespace NovaEngine
 
 	GameWindow::~GameWindow()
 	{
-		if (isGlfwInitialized_)
-		{
-			Logger::get()->info("terminating GLFW!...");
-			glfwTerminate();
-			isGlfwInitialized_ = false;
-		}
+		
 	}
 
 	bool GameWindow::create(const char* title, const GameWindowConfig& config)

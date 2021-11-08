@@ -4,29 +4,41 @@
 
 namespace NovaEngine::Graphics
 {
+	void GraphicsManager::onFrameBufferResizedHandler(GLFWwindow* window, int width, int height)
+	{
+		GraphicsManager* m = static_cast<GraphicsManager*>(glfwGetWindowUserPointer(window));
+		if (m != nullptr)
+		{
+			m->initSwapChain(true);
+
+			for (size_t i = 0; i < m->commandBuffers_.buffers.size(); i++)
+				m->recordCommands(i);
+
+			m->draw();
+		}
+	}
+
 	bool GraphicsManager::onInitialize(GLFWwindow* window)
 	{
 		try
 		{
+			window_ = window;
 			instance_ = VkFactory::createInstance();
-			surface_ = VkFactory::createSurface(instance_, window);
+			surface_ = VkFactory::createSurface(instance_, window_);
 			physicalDevice_ = VkFactory::pickPhysicalDevice(instance_, surface_);
 			device_ = VkFactory::createDevice(physicalDevice_, surface_);
-			swapChain_ = VkFactory::createSwapChain(physicalDevice_, device_, surface_, window);
-			renderPass_ = VkFactory::createRenderPass(device_, swapChain_);
 
-			swapChain_.createFrameBuffers(renderPass_);
+			initSwapChain();
 
-			pipeline_ = VkFactory::createPipline(device_, swapChain_, renderPass_);
-			commandPool_ = VkFactory::createCommandPool(physicalDevice_, device_, surface_);
-			commandBuffers_ = VkFactory::createCommandBuffers(device_, swapChain_, commandPool_);
 			syncObjects_ = VkFactory::createSyncObjects(device_, swapChain_, 2);
+
+			glfwSetWindowUserPointer(window_, this);
+			glfwSetFramebufferSizeCallback(window_, onFrameBufferResizedHandler);
 		}
 		catch (const std::runtime_error& err)
 		{
 			Logger::get()->error(err.what());
 		}
-
 
 		for (size_t i = 0; i < commandBuffers_.buffers.size(); i++)
 			recordCommands(i);
@@ -38,11 +50,9 @@ namespace NovaEngine::Graphics
 	{
 		vkDeviceWaitIdle(*device_);
 		syncObjects_.destroy();
-		commandPool_.destroy();
-		swapChain_.destroyFrameBuffers();
-		pipeline_.destroy();
-		renderPass_.destroy();
-		swapChain_.destroy();
+
+		destroySwapChain();
+
 		device_.destroy();
 		physicalDevice_.destroy();
 		surface_.destroy();
@@ -50,6 +60,35 @@ namespace NovaEngine::Graphics
 
 		return true;
 	}
+
+	void GraphicsManager::initSwapChain(bool recreate)
+	{
+		if (isInitialized() && recreate)
+		{
+			Logger::get()->info("Recreating swapchain...");
+			vkDeviceWaitIdle(*device_);
+			destroySwapChain();
+		}
+
+		swapChain_ = VkFactory::createSwapChain(physicalDevice_, device_, surface_, window_);
+		renderPass_ = VkFactory::createRenderPass(device_, swapChain_);
+
+		swapChain_.createFrameBuffers(renderPass_);
+
+		pipeline_ = VkFactory::createPipline(device_, swapChain_, renderPass_);
+		commandPool_ = VkFactory::createCommandPool(physicalDevice_, device_, surface_);
+		commandBuffers_ = VkFactory::createCommandBuffers(device_, swapChain_, commandPool_);
+	}
+
+	void GraphicsManager::destroySwapChain()
+	{
+		commandPool_.destroy();
+		swapChain_.destroyFrameBuffers();
+		pipeline_.destroy();
+		renderPass_.destroy();
+		swapChain_.destroy();
+	}
+
 
 	void GraphicsManager::recordCommands(size_t index)
 	{
@@ -93,7 +132,17 @@ namespace NovaEngine::Graphics
 		vkWaitForFences(*device_, 1, &syncObjects_.inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
 		uint32_t imageIndex;
-		vkAcquireNextImageKHR(*device_, *swapChain_, UINT64_MAX, syncObjects_.imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+		VkResult result = vkAcquireNextImageKHR(*device_, *swapChain_, UINT64_MAX, syncObjects_.imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+
+		if (result == VK_ERROR_OUT_OF_DATE_KHR)
+		{
+			initSwapChain(true);
+			return;
+		}
+		else if (result != VK_SUCCESS)
+		{
+			throw std::runtime_error("Failed to aquire next image from swapchain!");
+		}
 
 		if (syncObjects_.imagesInFlight[imageIndex] != VK_NULL_HANDLE)
 		{
@@ -135,7 +184,12 @@ namespace NovaEngine::Graphics
 
 		presentInfo.pImageIndices = &imageIndex;
 
-		vkQueuePresentKHR(device_.presentationQueue, &presentInfo);
+		result = vkQueuePresentKHR(device_.presentationQueue, &presentInfo);
+
+		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+			initSwapChain(true);
+		else if (result != VK_SUCCESS)
+			throw std::runtime_error("failed to present swap chain image!");
 
 		currentFrame = (currentFrame + 1) % syncObjects_.maxFramesInFlight;
 	}

@@ -10,6 +10,9 @@ namespace NovaEngine::Graphics
 	class GraphicsManager : public SubSystem<GLFWwindow*>
 	{
 	private:
+		static void onFrameBufferResizedHandler(GLFWwindow* window, int width, int height);
+
+		GLFWwindow* window_;
 		Vk::Instance instance_;
 		Vk::Surface surface_;
 		Vk::PhysicalDevice physicalDevice_;
@@ -22,6 +25,7 @@ namespace NovaEngine::Graphics
 		Vk::SyncObjects syncObjects_;
 
 		ENGINE_SUB_SYSTEM_CTOR(GraphicsManager),
+			window_(nullptr),
 			instance_(),
 			surface_(),
 			physicalDevice_(),
@@ -37,6 +41,8 @@ namespace NovaEngine::Graphics
 	protected:
 		bool onInitialize(GLFWwindow* window);
 		bool onTerminate();
+		void initSwapChain(bool recreate = false);
+		void destroySwapChain();
 
 	public:
 		void draw();

@@ -8,7 +8,7 @@ namespace NovaEngine
 	namespace
 	{
 		// VulkanTest test;
-		
+
 		v8::Global<v8::Promise::Resolver> configurePromiseResolver_;
 		v8::Global<v8::Function> onLoadCallback_;
 		v8::Global<v8::Object> configuredValue_;
@@ -102,12 +102,15 @@ namespace NovaEngine
 		};
 	};
 
-
-	std::vector<Terminatable*> Engine::subSystems_;
-
 	char Engine::executablePath_[PATH_MAX];
 
-	Engine::Engine() : AbstractObject(), isRunning_(false), assetManager(this), scriptManager(this), configManager(this), graphicsManager(this), gameWindow(this)
+	Engine::Engine() : AbstractObject(),
+		isRunning_(false),
+		assetManager(this),
+		scriptManager(this),
+		configManager(this),
+		graphicsManager(this),
+		gameWindow(this)
 	{
 	}
 
@@ -115,26 +118,18 @@ namespace NovaEngine
 	{
 		Logger* l = Logger::get();
 
-		if (std::count(subSystems_.begin(), subSystems_.end(), subSystem))
+		l->info("Initializing ", name, "...");
+		if (!subSystem->initialize())
 		{
-			l->error("Subsystem ", name, " is already initialized!");
+			l->error("Failed to initialize ", name, "!");
 			return false;
 		}
 		else
 		{
-			l->info("Initializing ", name, "...");
-			if (!subSystem->initialize())
-			{
-				l->error("Failed to initialize ", name, "!");
-				return false;
-			}
-			else
-			{
-				l->info(name, " initialized!");
-				subSystems_.push_back(subSystem);
-				return true;
-			}
+			l->info(name, " initialized!");
+			return true;
 		}
+
 	}
 
 	bool Engine::onInitialize(const char* gameStartupScript)
@@ -246,22 +241,18 @@ namespace NovaEngine
 
 	bool Engine::onTerminate()
 	{
-		if (isRunning_)
-			stop();
-
-		// test.cleanup();
-
-		graphicsManager.terminate();
-
 		configurePromiseResolver_.Reset();
 		onLoadCallback_.Reset();
 		configuredValue_.Reset();
 
+		graphicsManager.terminate();
 		configManager.terminate();
 		scriptManager.terminate();
 		assetManager.terminate();
 
 		Logger::terminate();
+
+		glfwTerminate();
 
 		return true;
 	}

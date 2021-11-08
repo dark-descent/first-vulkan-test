@@ -44,7 +44,7 @@
 #pragma region DEFINES
 
 #ifdef DEBUG
-#define CHECK(expr, msg) { if(!expr) { Logger::get()->error(msg); return false; } else { Logger::get()->info(#expr" success!"); } }
+#define CHECK(expr, msg) { if(!expr) { Logger::get()->error(msg); return false; } }
 #else
 #define CHECK(expr, msg) if(!expr) return false;
 #endif

@@ -222,6 +222,10 @@ namespace NovaEngine::Graphics
 			createInfo.presentMode = presentMode;
 			createInfo.clipped = VK_TRUE;
 
+			/**
+			 * @todo
+			 *  - pass old swapchain handle when the framebuffer resized
+			 */
 			createInfo.oldSwapchain = VK_NULL_HANDLE;
 
 			VkSwapchainKHR swapChain;

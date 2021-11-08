@@ -16,7 +16,6 @@ namespace NovaEngine
 	{
 	private:
 		static char executablePath_[PATH_MAX];
-		static std::vector<Terminatable*> subSystems_;
 
 		bool isRunning_;
 
@@ -51,25 +50,16 @@ namespace NovaEngine
 		{
 			Logger* l = Logger::get();
 
-			if (std::count(subSystems_.begin(), subSystems_.end(), subSystem))
+			l->info("Initializing ", name, "...");
+			if (!subSystem->initialize(args...))
 			{
-				l->error("Subsystem ", name, " is already initialized!");
+				l->error("Failed to initialize ", name, "!");
 				return false;
 			}
 			else
 			{
-				l->info("Initializing ", name, "...");
-				if (!subSystem->initialize(args...))
-				{
-					l->error("Failed to initialize ", name, "!");
-					return false;
-				}
-				else
-				{
-					l->info(name, " initialized!");
-					subSystems_.push_back(subSystem);
-					return true;
-				}
+				l->info(name, " initialized!");
+				return true;
 			}
 		}
 
