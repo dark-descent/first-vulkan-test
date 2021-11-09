@@ -27,6 +27,7 @@
 #include <cstdlib>
 #include <stdlib.h>
 #include <cassert>
+#include <atomic>
 
 #include <libgen.h>
 #include <unistd.h>

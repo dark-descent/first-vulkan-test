@@ -110,6 +110,7 @@ namespace NovaEngine
 		scriptManager(this),
 		configManager(this),
 		graphicsManager(this),
+		jobSystem(this),
 		gameWindow(this)
 	{
 	}
@@ -171,6 +172,8 @@ namespace NovaEngine
 		CHECK_REJECT(gameWindow.create(configManager.getConfig()->name.c_str(), configManager.getConfig()->window), rejectGameConfig, "Could not create Game Window!");
 
 		CHECK_REJECT(initSubSystem("Graphics Manager", &graphicsManager, gameWindow.glfwWindow()), rejectGameConfig, "Could not create graphics stack!");
+
+		CHECK_REJECT(jobSystem.initialize(1000, 7), rejectGameConfig, "Could not initialize Job System!");
 
 		return true;
 	}
@@ -245,6 +248,7 @@ namespace NovaEngine
 		onLoadCallback_.Reset();
 		configuredValue_.Reset();
 
+		jobSystem.terminate();
 		graphicsManager.terminate();
 		configManager.terminate();
 		scriptManager.terminate();
