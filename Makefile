@@ -22,8 +22,8 @@ CC_WARNING_ERRORS = return-type
 DISABLED_CC_WARNINGS = unknown-pragmas unused-function unused-variable unused-result
 
 CC = g++
-CFLAGS = $(patsubst %,-Werror=%,$(CC_WARNING_ERRORS)) -Wall $(patsubst %,-Wno-%,$(DISABLED_CC_WARNINGS)) -std=c++17 -O2 $(LIBS) $(INCLUDE_DIRS) $(DEFINES) -pthread -lpthread
-LDFLAGS = -L$(V8_DIR) $(LIBS) $(DEFINES) -pthread  -lpthread
+CFLAGS = -g $(patsubst %,-Werror=%,$(CC_WARNING_ERRORS)) -Wall $(patsubst %,-Wno-%,$(DISABLED_CC_WARNINGS)) -std=c++17 -O2 $(LIBS) $(INCLUDE_DIRS) $(DEFINES) -pthread -lpthread
+LDFLAGS = -g -L$(V8_DIR) $(LIBS) $(DEFINES) -pthread  -lpthread
 
 DIRS := $(shell find src -type d)
 
@@ -31,6 +31,10 @@ SRCS = $(foreach dir,$(DIRS),$(wildcard $(dir)/*.cpp))
 SRCS_OUT = $(patsubst %.cpp,%.o,$(SRCS))
 OBJS = $(patsubst src/%,$(OUT_DIR)/%,$(SRCS_OUT))
 INCLUDES = $(wildcard include/*.hpp)
+
+ASM_SRC = $(foreach dir,$(DIRS),$(wildcard $(dir)/*.asm))
+ASM_OUT = $(patsubst %.asm,%.o,$(ASM_SRC))
+OBJS += $(patsubst src/%,$(OUT_DIR)/%,$(ASM_OUT))
 
 PCH_NAME = framework.hpp.pch
 
@@ -66,6 +70,11 @@ out/%.o: src/%.cpp $(INCLUDES)
 	@echo "Compiling $<..."
 	@mkdir -p $(@D)
 	@$(CC) $(CFLAGS) -include $(PCH_SRC) -c $< -o $@
+
+out/%.o: src/%.asm
+	@echo "Compiling $<..."
+	@mkdir -p $(@D)
+	@nasm -f elf64 $< -o $@
 
 out/assets/%.vert.spv: %.vert
 	@echo "Compiling $<..."

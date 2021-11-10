@@ -1,5 +1,10 @@
 #include "JobSystem.hpp"
 
+#define JOB(name) static void name(NovaEngine::Engine* engine, void*)
+
+#define JOBA(name, ArgType) static void name(NovaEngine::Engine* engine, ArgType* args)
+
+
 namespace NovaEngine
 {
 	void JobSystem::threadMain()

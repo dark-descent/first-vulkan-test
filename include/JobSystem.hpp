@@ -71,7 +71,7 @@ namespace NovaEngine
 			int s = size_.fetch_add(1, std::memory_order::memory_order_acq_rel);
 			int i = stackPointer_.fetch_add(1, std::memory_order::memory_order_acq_rel);
 
-			if (s > capacity_ - 1)
+			if (s > static_cast<int>(capacity_ - 1))
 			{
 				size_.fetch_sub(1, std::memory_order::memory_order_release);
 				return false;
@@ -143,7 +143,7 @@ namespace NovaEngine
 			int s = size_.fetch_add(1, std::memory_order::memory_order_acq_rel);
 			int i = lastIndex_.fetch_add(1, std::memory_order::memory_order_acq_rel) % capacity_;
 
-			if (s > capacity_ - 1)
+			if (s > static_cast<int>(capacity_ - 1))
 			{
 				size_.fetch_sub(1, std::memory_order::memory_order_release);
 				return false;
@@ -177,10 +177,9 @@ namespace NovaEngine
 
 	class JobSystem : SubSystem<size_t, size_t>
 	{
-	private:
+	public:
 		struct Context
 		{
-			Counter counter;
 			void* rip;
 			void* rsp;
 			void* rbx;
@@ -189,7 +188,9 @@ namespace NovaEngine
 			void* r13;
 			void* r14;
 			void* r15;
+			Counter counter;
 		};
+	private:
 
 		std::mutex mutex_;
 		std::condition_variable cv_;

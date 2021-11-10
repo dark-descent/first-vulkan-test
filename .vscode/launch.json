@@ -11,7 +11,7 @@
 			"program": "${workspaceFolder}/test-game-build/nova-engine",
 			"args": [],
 			"stopAtEntry": false,
-			"cwd": "${fileDirname}",
+			"cwd": "${workspaceFolder}/test-game-build",
 			"environment": [],
 			"externalConsole": false,
 			"MIMode": "gdb",
