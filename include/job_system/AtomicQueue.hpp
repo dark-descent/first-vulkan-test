@@ -51,6 +51,7 @@ namespace NovaEngine::JobSystem
 
 			if (s > static_cast<int>(capacity_ - 1))
 			{
+				printf("atomic queue overflow!!!\n");
 				size_.fetch_sub(1, std::memory_order::release);
 				return false;
 			}
@@ -63,8 +64,9 @@ namespace NovaEngine::JobSystem
 		{
 			int s = size_.fetch_sub(1, std::memory_order::acq_rel);
 			int i = firstIndex_.fetch_add(1, std::memory_order::acq_rel) % capacity_;
-			if (s <= 0)
+			if (s < 0)
 			{
+				printf("atomic queue underflow!!!\n");
 				size_.fetch_add(1, std::memory_order::release);
 				return false;
 			}

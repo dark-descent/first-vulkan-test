@@ -64,7 +64,7 @@ namespace NovaEngine::JobSystem
 			int s = size_.fetch_sub(1, std::memory_order::acq_rel);
 			int i = stackPointer_.fetch_sub(1, std::memory_order::acq_rel) - 1;
 
-			if (s <= 0)
+			if (s < 0)
 			{
 				printf("atomic stack underflow!!!\n");
 				size_.fetch_add(1, std::memory_order::release);

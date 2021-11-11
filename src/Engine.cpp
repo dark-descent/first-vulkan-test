@@ -214,64 +214,15 @@ namespace NovaEngine
 		return isRunning_;
 	}
 
-	// JOB(testJobC)
-	// {
-	// 	printf("Job C will spawn in between... :P!\n");
-	// 	JOB_RETURN;
-	// }
-
-	// JOB(testJobB)
-	// {
-	// 	printf("Helloa from job B :D!\n");
-
-	// 	const size_t jobsCount = 1;
-
-	// 	NovaEngine::JobSystem::JobInfo jobs[jobsCount];
-
-	// 	for (size_t i = 0; i < jobsCount; i++)
-	// 		jobs[i] = { testJobC, i };
-
-	// 	scheduler->runJobs(jobs, jobsCount);
-
-	// 	JOB_RETURN;
-	// }
-
-	// JOB(testJobA)
-	// {
-	// 	printf("start job A.%lu...\n", reinterpret_cast<size_t>(arg));
-	// 	const size_t jobsCount = 2;
-
-	// 	NovaEngine::JobSystem::JobInfo jobs[jobsCount];
-
-	// 	for (size_t i = 0; i < jobsCount; i++)
-	// 		jobs[i] = { testJobB };
-
-	// 	NovaEngine::JobSystem::Counter* c = scheduler->runJobs(jobs, jobsCount);
-
-	// 	awaitCounter(c);
-
-	// 	printf("ended job A!\n");
-
-	// 	JOB_RETURN;
-	// }
-
-	JOB(eventLoopJob)
+	JOB(engineLoop)
 	{
 		glfwPollEvents();
-		scheduler->engine()->graphicsManager.draw();
+		engine->graphicsManager.draw();
 
-		if (scheduler->engine()->gameWindow.isOpen())
-		{
-			const size_t jobsCount = 1;
-
-			NovaEngine::JobSystem::JobInfo jobs[jobsCount];
-
-			for (size_t i = 0; i < jobsCount; i++)
-				jobs[i] = { eventLoopJob, i };
-
-			scheduler->runJobs(jobs, jobsCount);
-		}
-		
+		if (engine->gameWindow.isOpen())
+			scheduler->runJob(engineLoop);
+		else
+			printf("exit");
 		JOB_RETURN;
 	}
 
@@ -283,20 +234,16 @@ namespace NovaEngine
 
 			const size_t jobsCount = 1;
 
-			NovaEngine::JobSystem::JobInfo jobs[jobsCount];
-
-			for (size_t i = 0; i < jobsCount; i++)
-				jobs[i] = { eventLoopJob, i };
+			jobScheduler.runJob(engineLoop);
 
 			isRunning_ = true;
 
-			jobScheduler.runJobs(jobs, jobsCount);
-
 			jobScheduler.exec();
+
+			isRunning_  = false;
 		}
 	}
-	// "no instance of constructor \"NovaEngine::JobSystem::JobInfo::JobInfo\" matches the argument list -- argument types are: 
-	// (NovaEngine::JobSystem::Job (NovaEngine::JobSystem::Counter *__COROOUTINE_COUNTER__, NovaEngine::JobSystem::JobScheduler *scheduler, void *arg), size_t)",
+
 	void Engine::stop()
 	{
 		if (isRunning_)

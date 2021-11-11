@@ -46,9 +46,43 @@ namespace NovaEngine::JobSystem
 			freeHandleStack_.pop(&handlePtr);
 			if (handlePtr != nullptr)
 			{
-				*handlePtr = jobs[i].function(c, this, jobs[i].arg);
+				*handlePtr = jobs[i].function(c, this, engine(), jobs[i].arg);
 				jobQueue_.push(handlePtr);
 			}
+		}
+
+		return c;
+	}
+
+	Counter* JobScheduler::runJob(JobInfo job)
+	{
+		Counter* c = new Counter(0);
+
+		c->store(1, std::memory_order::relaxed);
+
+		JobHandlePtr handlePtr = nullptr;
+		freeHandleStack_.pop(&handlePtr);
+		if (handlePtr != nullptr)
+		{
+			*handlePtr = job.function(c, this, engine(), job.arg);
+			jobQueue_.push(handlePtr);
+		}
+
+		return c;
+	}
+
+	Counter* JobScheduler::runJob(JobFunction function)
+	{
+		Counter* c = new Counter(0);
+
+		c->store(1, std::memory_order::relaxed);
+
+		JobHandlePtr handlePtr = nullptr;
+		freeHandleStack_.pop(&handlePtr);
+		if (handlePtr != nullptr)
+		{
+			*handlePtr = function(c, this, engine(), nullptr);
+			jobQueue_.push(handlePtr);
 		}
 
 		return c;

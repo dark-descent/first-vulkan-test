@@ -10,7 +10,7 @@
 #include "job_system/Job.hpp"
 #include "job_system/WaitList.hpp"
 
-#define JOB(name) NovaEngine::JobSystem::Job name(NovaEngine::JobSystem::Counter* __COROOUTINE_COUNTER__, NovaEngine::JobSystem::JobScheduler* scheduler, void* arg)
+#define JOB(name) NovaEngine::JobSystem::Job name(NovaEngine::JobSystem::Counter* __COROOUTINE_COUNTER__, NovaEngine::JobSystem::JobScheduler* scheduler, NovaEngine::Engine* engine, void* arg)
 #define awaitCounter(counter) co_yield { counter, false }
 #define JOB_RETURN co_yield { __COROOUTINE_COUNTER__, true }
 
@@ -19,7 +19,7 @@ namespace NovaEngine::JobSystem
 	class JobScheduler;
 
 
-	typedef Job(*JobFunction)(Counter* counter, NovaEngine::JobSystem::JobScheduler* scheduler, void* arg);
+	typedef Job(*JobFunction)(Counter* counter, NovaEngine::JobSystem::JobScheduler* scheduler, NovaEngine::Engine* engine, void* arg);
 
 	struct JobInfo
 	{
@@ -49,6 +49,8 @@ namespace NovaEngine::JobSystem
 
 	public:
 		Counter* runJobs(JobInfo* jobs, size_t jobsCount);
+		Counter* runJob(JobInfo jobs);
+		Counter* runJob(JobFunction func);
 
 		void exec();
 	};
