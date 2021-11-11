@@ -8,10 +8,12 @@
 
 namespace NovaEngine::JobSystem
 {
-	class TaskManager : public SubSystem<size_t, size_t>
+	class JobScheduler : public SubSystem<size_t, size_t>
 	{
 	private:
-		ENGINE_SUB_SYSTEM_CTOR(TaskManager) {  }
+		
+
+		ENGINE_SUB_SYSTEM_CTOR(JobScheduler) {  }
 
 	protected:
 		bool onInitialize(size_t maxJobs, size_t executionThreads);

@@ -9,7 +9,7 @@
 #include "GameWindow.hpp"
 #include "graphics/GraphicsManager.hpp"
 #include "Logger.hpp"
-#include "job_system/TaskManager.hpp"
+#include "job_system/JobScheduler.hpp"
 
 namespace NovaEngine
 {
@@ -25,7 +25,7 @@ namespace NovaEngine
 		ScriptManager scriptManager;
 		ConfigManager configManager;
 		Graphics::GraphicsManager graphicsManager;
-		JobSystem::TaskManager jobSystem;
+		JobSystem::JobScheduler jobScheduler;
 		GameWindow gameWindow;
 
 		Engine();
