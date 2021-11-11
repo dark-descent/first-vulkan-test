@@ -75,6 +75,7 @@ namespace NovaEngine::JobSystem
 						});
 					}
 					jobHandle->destroy();
+					freeHandleStack_.push(jobHandle);
 				}
 				else
 				{

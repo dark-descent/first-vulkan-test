@@ -26,8 +26,6 @@ namespace NovaEngine::JobSystem
 		JobFunction function = nullptr;
 		void* arg = nullptr;
 
-
-
 		template<typename T>
 		JobInfo(JobFunction function, T arg) : function(function), arg(reinterpret_cast<void*>(arg)) {}
 
