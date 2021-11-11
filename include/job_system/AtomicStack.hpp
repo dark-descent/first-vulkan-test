@@ -21,6 +21,12 @@ namespace NovaEngine::JobSystem
 			size_.store(0);
 		}
 
+		~AtomicStack()
+		{
+			if(data_ != nullptr)
+				free(data_);
+		}
+
 		bool initialize(size_t size)
 		{
 			if (data_ == nullptr && size != 0)
@@ -43,6 +49,7 @@ namespace NovaEngine::JobSystem
 
 			if (s > static_cast<int>(capacity_ - 1))
 			{
+				printf("atomic stack overflow!!!\n");
 				size_.fetch_sub(1, std::memory_order::release);
 				return false;
 			}
@@ -59,6 +66,7 @@ namespace NovaEngine::JobSystem
 
 			if (s <= 0)
 			{
+				printf("atomic stack underflow!!!\n");
 				size_.fetch_add(1, std::memory_order::release);
 				return false;
 			}

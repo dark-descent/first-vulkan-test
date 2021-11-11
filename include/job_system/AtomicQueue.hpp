@@ -23,6 +23,12 @@ namespace NovaEngine::JobSystem
 			size_.store(0);
 		}
 
+		~AtomicQueue()
+		{
+			if(data_ != nullptr)
+				free(data_);
+		}
+
 		bool initialize(size_t size)
 		{
 			if (data_ == nullptr && size != 0)

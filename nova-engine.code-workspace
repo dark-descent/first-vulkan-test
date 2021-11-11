@@ -85,7 +85,8 @@
 			"queue": "cpp",
 			"mutex": "cpp",
 			"condition_variable": "cpp",
-			"csignal": "cpp"
+			"csignal": "cpp",
+			"coroutine": "cpp"
 		}
 	}
 }

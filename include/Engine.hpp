@@ -47,6 +47,7 @@ namespace NovaEngine
 		bool onTerminate();
 
 	private:
+
 		template<typename... Args>
 		bool initSubSystem(const char* name, SubSystem<Args...>* subSystem, Args... args)
 		{

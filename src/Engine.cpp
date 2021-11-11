@@ -5,15 +5,12 @@
 
 namespace NovaEngine
 {
+#pragma region Scripting Area
 	namespace
 	{
-		// VulkanTest test;
-
 		v8::Global<v8::Promise::Resolver> configurePromiseResolver_;
 		v8::Global<v8::Function> onLoadCallback_;
 		v8::Global<v8::Object> configuredValue_;
-
-		std::vector<Engine*> engineInstances_;
 
 		SCRIPT_METHOD(onEngineConfigure)
 		{
@@ -101,6 +98,7 @@ namespace NovaEngine
 			o->Set(ctx, manager->createString("Engine"), engineObj);
 		};
 	};
+#pragma endregion
 
 	char Engine::executablePath_[PATH_MAX];
 
@@ -216,22 +214,89 @@ namespace NovaEngine
 		return isRunning_;
 	}
 
+	// JOB(testJobC)
+	// {
+	// 	printf("Job C will spawn in between... :P!\n");
+	// 	JOB_RETURN;
+	// }
+
+	// JOB(testJobB)
+	// {
+	// 	printf("Helloa from job B :D!\n");
+
+	// 	const size_t jobsCount = 1;
+
+	// 	NovaEngine::JobSystem::JobInfo jobs[jobsCount];
+
+	// 	for (size_t i = 0; i < jobsCount; i++)
+	// 		jobs[i] = { testJobC, i };
+
+	// 	scheduler->runJobs(jobs, jobsCount);
+
+	// 	JOB_RETURN;
+	// }
+
+	// JOB(testJobA)
+	// {
+	// 	printf("start job A.%lu...\n", reinterpret_cast<size_t>(arg));
+	// 	const size_t jobsCount = 2;
+
+	// 	NovaEngine::JobSystem::JobInfo jobs[jobsCount];
+
+	// 	for (size_t i = 0; i < jobsCount; i++)
+	// 		jobs[i] = { testJobB };
+
+	// 	NovaEngine::JobSystem::Counter* c = scheduler->runJobs(jobs, jobsCount);
+
+	// 	awaitCounter(c);
+
+	// 	printf("ended job A!\n");
+
+	// 	JOB_RETURN;
+	// }
+
+	JOB(eventLoopJob)
+	{
+		glfwPollEvents();
+		scheduler->engine()->graphicsManager.draw();
+
+		if (scheduler->engine()->gameWindow.isOpen())
+		{
+			const size_t jobsCount = 1;
+
+			NovaEngine::JobSystem::JobInfo jobs[jobsCount];
+
+			for (size_t i = 0; i < jobsCount; i++)
+				jobs[i] = { eventLoopJob, i };
+
+			scheduler->runJobs(jobs, jobsCount);
+		}
+		
+		JOB_RETURN;
+	}
+
 	void Engine::start()
 	{
 		if (!isRunning_)
 		{
 			Logger::get()->info("starting engine...");
 
+			const size_t jobsCount = 1;
+
+			NovaEngine::JobSystem::JobInfo jobs[jobsCount];
+
+			for (size_t i = 0; i < jobsCount; i++)
+				jobs[i] = { eventLoopJob, i };
+
 			isRunning_ = true;
 
-			while (gameWindow.isOpen())
-			{
-				glfwPollEvents();
-				graphicsManager.draw();
-			}
+			jobScheduler.runJobs(jobs, jobsCount);
+
+			jobScheduler.exec();
 		}
 	}
-
+	// "no instance of constructor \"NovaEngine::JobSystem::JobInfo::JobInfo\" matches the argument list -- argument types are: 
+	// (NovaEngine::JobSystem::Job (NovaEngine::JobSystem::Counter *__COROOUTINE_COUNTER__, NovaEngine::JobSystem::JobScheduler *scheduler, void *arg), size_t)",
 	void Engine::stop()
 	{
 		if (isRunning_)
