@@ -21,8 +21,8 @@ CC_WARNING_ERRORS = return-type
 
 DISABLED_CC_WARNINGS = unknown-pragmas unused-function unused-variable unused-result
 
-CC = g++
-CFLAGS = -g $(patsubst %,-Werror=%,$(CC_WARNING_ERRORS)) -Wall $(patsubst %,-Wno-%,$(DISABLED_CC_WARNINGS)) -std=c++17 -O2 $(LIBS) $(INCLUDE_DIRS) $(DEFINES) -pthread -lpthread
+CC = g++-11
+CFLAGS = -g -std=c++2a -O3 $(patsubst %,-Werror=%,$(CC_WARNING_ERRORS)) -Wall $(patsubst %,-Wno-%,$(DISABLED_CC_WARNINGS)) $(INCLUDE_DIRS) $(DEFINES)
 LDFLAGS = -g -L$(V8_DIR) $(LIBS) $(DEFINES) -pthread  -lpthread
 
 DIRS := $(shell find src -type d)
@@ -30,11 +30,7 @@ DIRS := $(shell find src -type d)
 SRCS = $(foreach dir,$(DIRS),$(wildcard $(dir)/*.cpp))
 SRCS_OUT = $(patsubst %.cpp,%.o,$(SRCS))
 OBJS = $(patsubst src/%,$(OUT_DIR)/%,$(SRCS_OUT))
-INCLUDES = $(wildcard include/*.hpp)
-
-ASM_SRC = $(foreach dir,$(DIRS),$(wildcard $(dir)/*.asm))
-ASM_OUT = $(patsubst %.asm,%.o,$(ASM_SRC))
-OBJS += $(patsubst src/%,$(OUT_DIR)/%,$(ASM_OUT))
+INCLUDES = $(wildcard include/*.hpp) $(wildcard include/graphics/*.hpp) $(wildcard include/job_system/*.hpp)
 
 PCH_NAME = framework.hpp.pch
 
@@ -45,6 +41,11 @@ SHADER_VERT_SRCS = $(wildcard shaders/*.vert)
 SHADER_FRAG_SRCS = $(wildcard shaders/*.frag)
 SHADER_VERT_OUT = $(patsubst %.vert,out/assets/%.vert.spv,$(SHADER_VERT_SRCS))
 SHADER_FRAG_OUT = $(patsubst %.frag,out/assets/%.frag.spv,$(SHADER_FRAG_SRCS))
+
+# test-once: $(PCH_OUT) $(SRCS) $(INCLUDES)
+# 	$(CC) $(CFLAGS) -j -include $(PCH_SRC) $(SRCS) $(LDFLAGS) -o test.out
+
+all: test-game
 
 test-game: $(OUT_FILE) compile-shaders test-game-scripts
 	@mkdir -p $(TEST_GAME_OUT)

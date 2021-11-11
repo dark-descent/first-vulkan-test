@@ -3,41 +3,27 @@
 #include "framework.hpp"
 #include "Logger.hpp"
 
-extern "C" void saveContext(NovaEngine::JobSystem::Context * ctx);
-extern "C" void restoreContext(NovaEngine::JobSystem::Context * ctx);
+void testFunc()
+{
+	printf("test func :D");
+}
 
 int main(int argc, const char** argv)
 {
 	using namespace NovaEngine;
 
+	Engine engine;
 
-	volatile int x = 0;
+	if(!engine.initialize("Game.js"))
+		return 1;
+		
+	engine.run();
 
-	NovaEngine::JobSystem::Context c;
-	saveContext(&c);
-
-	printf("hello, world!\n");
-
-	if (x == 0)
+	if(!engine.terminate())
 	{
-		x++;
-		restoreContext(&c);
+		Logger::get()->info("oops??");
+		return 2;
 	}
-
-	return 0;
-
-	// Engine engine;
-
-	// if(!engine.initialize("Game.js"))
-	// 	return 1;
-
-	// engine.run();
-
-	// if(!engine.terminate())
-	// {
-	// 	Logger::get()->info("oops??");
-	// 	return 2;
-	// }
 
 	return 0;
 }

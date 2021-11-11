@@ -135,8 +135,6 @@ namespace NovaEngine
 
 	bool Engine::onInitialize(const char* gameStartupScript)
 	{
-		Engine engine();
-
 		Logger::get()->info("Initializing Engine...");
 
 		CHECK(initSubSystem("Asset manager", &assetManager, executablePath()), "Failed to initialize Asset Manager!");

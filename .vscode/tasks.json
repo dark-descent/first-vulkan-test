@@ -3,7 +3,7 @@
 	"tasks": [
 		{
 			"type": "shell",
-			"label": "g++ build active file",
+			"label": "build",
 			"command": "make",
 			"args": [
 				"run"
