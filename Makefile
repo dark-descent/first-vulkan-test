@@ -42,8 +42,8 @@ SHADER_FRAG_SRCS = $(wildcard shaders/*.frag)
 SHADER_VERT_OUT = $(patsubst %.vert,out/assets/%.vert.spv,$(SHADER_VERT_SRCS))
 SHADER_FRAG_OUT = $(patsubst %.frag,out/assets/%.frag.spv,$(SHADER_FRAG_SRCS))
 
-# test-once: $(PCH_OUT) $(SRCS) $(INCLUDES)
-# 	$(CC) $(CFLAGS) -j -include $(PCH_SRC) $(SRCS) $(LDFLAGS) -o test.out
+SHADERS_SRCS = $(SHADER_VERT_SRCS) $(SHADER_FRAG_SRCS) 
+SHADERS_OUT = $(SHADER_VERT_OUT) $(SHADER_FRAG_OUT)
 
 all: test-game
 
@@ -60,7 +60,12 @@ $(OUT_FILE): $(PCH_OUT) $(OBJS) $(INCLUDES)
 
 .PHONY: test clean
 
-compile-shaders: $(SHADER_VERT_OUT) $(SHADER_FRAG_OUT)
+shaders: $(SHADERS_SRCS)
+	@echo "Compiling shaders..."
+	@$(MAKE) compile-shaders -j
+	@echo "Shaders compiled..."
+
+compile-shaders: $(SHADERS_OUT)
 
 $(PCH_OUT): $(PCH_SRC)
 	@mkdir -p $(@D)
@@ -72,25 +77,21 @@ out/%.o: src/%.cpp $(INCLUDES)
 	@mkdir -p $(@D)
 	@$(CC) $(CFLAGS) -include $(PCH_SRC) -c $< -o $@
 
-out/%.o: src/%.asm
-	@echo "Compiling $<..."
-	@mkdir -p $(@D)
-	@nasm -f elf64 $< -o $@
-
 out/assets/%.vert.spv: %.vert
 	@echo "Compiling $<..."
 	@mkdir -p $(@D)
-	glslc $< -o $@
+	@glslc $< -o $@
 
 out/assets/%.frag.spv: %.frag
 	@echo "Compiling $<..."
 	@mkdir -p $(@D)
-	glslc $< -o $@
+	@glslc $< -o $@
 
-run: test-game
-	@echo "[starting game]\n"
+run:
+	@$(MAKE) test-game -j
+	@echo "-------- [ starting game ] --------\n"
 	@cd $(TEST_GAME_OUT) && DRI_PRIME=0 ./$(ENGINE_NAME) Game.js
-	@echo "\n[game stopped]"
+	@echo "\n-------- [ game stopped ] --------"
 
 watch-ts:
 	@cd test-game && tsc --watch
@@ -100,8 +101,9 @@ test-game-scripts: $(TEST_GAME_SCRIPTS)
 	@cd test-game && tsc
 
 clean:
-	rm -rf out/**
-	rm -rf test-game-build
+	@echo "Cleaning up..."
+	@rm -rf out/**
+	@rm -rf test-game-build
 
 clear:
 	$(MAKE) clean
