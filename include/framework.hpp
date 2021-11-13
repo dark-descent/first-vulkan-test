@@ -29,6 +29,8 @@
 #include <cassert>
 #include <atomic>
 #include <optional>
+#include <stack>
+#include <coroutine>
 
 #include <libgen.h>
 #include <unistd.h>

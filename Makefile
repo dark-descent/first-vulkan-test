@@ -69,7 +69,7 @@ compile-shaders: $(SHADERS_OUT)
 
 $(PCH_OUT): $(PCH_SRC)
 	@mkdir -p $(@D)
-	@$(CC) $(CCFLAGS) $(INCLUDE_DIRS) $^ -o $@
+	@$(CC) $(CFLAGS) -fcoroutines $(INCLUDE_DIRS) $^ -o $@
 	@echo "Recompiled PCH!"
 	
 out/%.o: src/%.cpp $(INCLUDES)

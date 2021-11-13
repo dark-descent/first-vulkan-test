@@ -1,82 +1,95 @@
 #ifndef ENGINE_JOB_SYSTEM_WAIT_LIST_HPP
 #define ENGINE_JOB_SYSTEM_WAIT_LIST_HPP
 
-#include "job_system/AtomicStack.hpp"
 #include "job_system/Job.hpp"
+#include "framework.hpp"
 
+
+#define AtomicFalse 0
+#define AtomicTrue 1
 
 namespace NovaEngine::JobSystem
 {
 	struct Job;
 
-	class WaitList
+	typedef std::lock_guard<std::mutex> scope_lock;
+	typedef std::atomic<int> AtomicBool;
+
+
+	template<typename T>
+	class List
 	{
-		AtomicStack<JobHandlePtr*> freeJobPtrs_;
-		JobHandlePtr* data_;
-		size_t capacity_;
+		std::mutex mutex_;
+		std::condition_variable cv_;
+		AtomicBool isBussy_;
+		std::vector<T> list_;
+
+		inline bool checkAndSetBussy()
+		{
+			int trueValue = AtomicTrue;
+			return !isBussy_.compare_exchange_weak(trueValue, AtomicFalse, std::memory_order::seq_cst);
+		}
 
 	public:
-		WaitList(size_t size = 0) : freeJobPtrs_(size), data_(nullptr), capacity_(size)
+		List() :
+			mutex_(),
+			cv_(),
+			isBussy_(),
+			list_()
+		{}
+
+		~List() {}
+
+		bool push(T& item)
 		{
-			if (size != 0)
-			{
-				data_ = reinterpret_cast<JobHandlePtr*>(malloc(sizeof(JobHandlePtr) * size));
-				memset(data_, 0, sizeof(JobHandlePtr) * size);
-				for (size_t i = 0; i < size; i++)
-					freeJobPtrs_.push(&data_[i]);
-			}
+			std::unique_lock<std::mutex> lock(mutex_);
+
+			cv_.wait(lock, [&] { return checkAndSetBussy(); });
+
+			list_.push_back(item);
+
+			lock.unlock();
+			isBussy_.store(AtomicFalse, std::memory_order::seq_cst);
+			cv_.notify_all();
+
+			return true;
 		}
 
-		~WaitList()
+		bool pushWeak(T& item)
 		{
-			free(data_);
-		}
+			if(!mutex_.try_lock())
+				return false;
 
-		bool initialize(size_t size)
-		{
-			if (capacity_ == 0 && size != 0)
-			{
-				freeJobPtrs_.initialize(size);
-				capacity_ = size;
-				data_ = reinterpret_cast<JobHandlePtr*>(malloc(sizeof(JobHandlePtr) * size));
-				memset(data_, 0, sizeof(JobHandlePtr) * size);
-				for (size_t i = 0; i < size; i++)
-					freeJobPtrs_.push(&data_[i]);
-				return true;
-			}
-			return false;
-		}
+			list_.push_back(item);
 
-		bool push(JobHandlePtr jobHandle)
-		{
-			JobHandlePtr* handlePtr = nullptr;
-			freeJobPtrs_.pop(&handlePtr);
-			if (handlePtr != nullptr)
-			{
-				*handlePtr = jobHandle;
-				return true;
-			}
+			mutex_.unlock();
+			isBussy_.store(AtomicFalse, std::memory_order::seq_cst);
+			cv_.notify_all();
 
-			return false;
+			return true;
 		}
 
 		template<typename Callback>
-		void findAndRelease(Counter* counter, Callback callback)
+		void findAndRelease(Callback callback)
 		{
-			for (size_t i = 0; i < capacity_; i++)
+			std::unique_lock<std::mutex> lock(mutex_);
+
+			cv_.wait(lock, [&] { return checkAndSetBussy(); });
+
+			std::vector<T*> toRemove;
+
+			for (T& l : list_)
 			{
-				JobHandlePtr handle = data_[i];
-
-				if (handle == nullptr)
-					continue;
-
-				if (handle->promise().state.counter == counter)
-				{
-					data_[i] = nullptr;
-					callback(handle);
-					freeJobPtrs_.push(&data_[i]);
-				}
+				if (callback(l))
+					toRemove.push_back(&l);
 			}
+
+			for (T* l : toRemove)
+				list_.erase(std::remove(list_.begin(), list_.end(), *l), list_.end());
+
+			lock.unlock();
+			isBussy_.store(AtomicFalse, std::memory_order::seq_cst);
+			cv_.notify_all();
 		}
 	};
 }

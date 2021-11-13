@@ -2,7 +2,6 @@
 #define ENGINE_JOB_SYSTEM_JOB_HPP
 
 #include "framework.hpp"
-#include <coroutine>
 
 namespace NovaEngine::JobSystem
 {
@@ -16,6 +15,18 @@ namespace NovaEngine::JobSystem
 			bool isDone = false;
 		};
 
+		struct suspend_maybe
+		{
+			bool suspend;
+			suspend_maybe(bool suspend): suspend(suspend){}
+
+			bool await_ready() const noexcept { return suspend; }
+
+			void await_suspend(std::coroutine_handle<>) const noexcept {}
+
+			void await_resume() const noexcept {}
+		};
+
 		struct promise_type
 		{
 			State state;
@@ -23,7 +34,13 @@ namespace NovaEngine::JobSystem
 			Job get_return_object() { return { std::coroutine_handle<promise_type>::from_promise(*this) }; }
 			std::suspend_always initial_suspend() { return {}; }
 			std::suspend_never final_suspend() noexcept { return {}; }
-			std::suspend_always yield_value(State s) { state = s; return {}; };
+			suspend_maybe yield_value(State s)
+			{
+				state = s;
+				if(s.counter->load(std::memory_order::acquire) == 0)
+					return suspend_maybe { true };
+				return suspend_maybe { false };
+			};
 			void unhandled_exception() {}
 		};
 

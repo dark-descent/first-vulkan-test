@@ -4,124 +4,136 @@ namespace NovaEngine::JobSystem
 {
 	bool JobScheduler::onInitialize(size_t maxJobs, size_t executionThreads)
 	{
-		jobHandles_ = reinterpret_cast<JobHandle*>(malloc(sizeof(JobHandle) * maxJobs));
-		jobQueue_.initialize(maxJobs);
-		freeHandleStack_.initialize(maxJobs);
-		waitList_.initialize(maxJobs);
+		maxJobs_ = maxJobs == 0 ? ENGINE_JOB_SYSTEM_MAX_JOBS : maxJobs;
 
-		for (size_t i = 0; i < maxJobs; i++)
-			freeHandleStack_.push(&jobHandles_[i]);
+		for (size_t i = 0; i < executionThreads; i++)
+			threads_.push_back(std::thread([&] { threadEntry(); }));
 
 		return true;
 	}
 
 	bool JobScheduler::onTerminate()
 	{
-		free(jobHandles_);
+		if (threadsRunning_.load(std::memory_order::acquire) == 1)
+			stopThreads();
+
+		for (std::thread& t : threads_)
+			t.join();
+
 		return true;
 	}
 
-	bool JobScheduler::runNextJob(JobHandlePtr* handleOut)
+	void JobScheduler::threadEntry()
 	{
-		JobHandlePtr handlePtr = nullptr;
-		jobQueue_.pop(&handlePtr);
+		std::thread::id threadID = std::this_thread::get_id();
 
-		if (handlePtr == nullptr)
+		while (threadsRunning_.load(std::memory_order::acquire) != 1)
+			; // wait (spin lock)
+
+		JobHandle jobHandle;
+		while (threadsRunning_)
+		{
+			if (runNextJob(&jobHandle))
+				handleJobYield(&jobHandle);
+		}
+	}
+
+	bool JobScheduler::runNextJob(JobHandlePtr handleOut)
+	{
+		if (readyQueue_.pop(handleOut))
+		{
+			if (handleOut != nullptr && !handleOut->done())
+			{
+				handleOut->resume();
+				return true;
+			}
 			return false;
+		}
 
-		*handleOut = handlePtr;
-		handlePtr->resume();
-		return true;
+		return false;
 	}
 
 	Counter* JobScheduler::runJobs(JobInfo* jobs, size_t jobsCount)
 	{
 		Counter* c = new Counter(0);
-
 		c->store(jobsCount, std::memory_order::relaxed);
 
 		for (size_t i = 0; i < jobsCount; i++)
-		{
-			JobHandlePtr handlePtr = nullptr;
-			freeHandleStack_.pop(&handlePtr);
-			if (handlePtr != nullptr)
-			{
-				*handlePtr = jobs[i].function(c, this, engine(), jobs[i].arg);
-				jobQueue_.push(handlePtr);
-			}
-		}
+			readyQueue_.push(jobs[i].function(c, this, this->engine(), jobs[i].arg));
 
 		return c;
 	}
 
 	Counter* JobScheduler::runJob(JobInfo job)
 	{
-		Counter* c = new Counter(0);
-
-		c->store(1, std::memory_order::relaxed);
-
-		JobHandlePtr handlePtr = nullptr;
-		freeHandleStack_.pop(&handlePtr);
-		if (handlePtr != nullptr)
-		{
-			*handlePtr = job.function(c, this, engine(), job.arg);
-			jobQueue_.push(handlePtr);
-		}
-
-		return c;
+		return runJobs(&job, 1);
 	}
 
 	Counter* JobScheduler::runJob(JobFunction function)
 	{
-		Counter* c = new Counter(0);
-
-		c->store(1, std::memory_order::relaxed);
-
-		JobHandlePtr handlePtr = nullptr;
-		freeHandleStack_.pop(&handlePtr);
-		if (handlePtr != nullptr)
-		{
-			*handlePtr = function(c, this, engine(), nullptr);
-			jobQueue_.push(handlePtr);
-		}
-
-		return c;
+		return runJob({ function, 0 });
 	}
 
-	void JobScheduler::exec()
+	void JobScheduler::execThreads()
 	{
-		JobHandlePtr jobHandle = nullptr;
-		while (runNextJob(&jobHandle))
+		threadsRunning_.store(1);
+	}
+
+	void JobScheduler::stopThreads()
+	{
+		threadsRunning_.store(0);
+	}
+
+	bool JobScheduler::handleJobYield(JobHandlePtr handle)
+	{
+		if (handle == nullptr)
 		{
-			if (!jobHandle->done())
+			return false;
+		}
+		else
+		{
+			std::unique_lock<std::mutex> s(jobYieldMutex_);
+
+			auto [counter, isDone] = handle->promise().state;
+
+			if (!isDone)
 			{
-				if (jobHandle->promise().state.isDone)
+				size_t c = counter->load(std::memory_order::seq_cst);
+				if (c == 0)
 				{
-					Counter* c = jobHandle->promise().state.counter;
-					size_t index = c->fetch_sub(1, std::memory_order_acq_rel) - 1;
-					if (index == 0)
-					{
-						// all dependecies with counter are finished!
-						// move all from wait list to ready list where counter == 0
-						// printf("all jobs with same counter done!\n");
-						waitList_.findAndRelease(c, [&](JobHandlePtr handlePtr) {
-							jobQueue_.push(handlePtr);
-						});
-					}
-					jobHandle->destroy();
-					freeHandleStack_.push(jobHandle);
+					readyQueue_.push(*handle);
 				}
 				else
 				{
-					// add to waiting list with counter dependency
-					waitList_.push(jobHandle);
+					while (!waitList_.pushWeak(*handle))
+					{
+						c = counter->load(std::memory_order::seq_cst);
+						if (c == 0)
+						{
+							readyQueue_.push(*handle);
+							return true;
+						}
+					}
 				}
 			}
 			else
 			{
-				jobHandle->destroy();
-				freeHandleStack_.push(jobHandle);
+				size_t index = counter->fetch_sub(1, std::memory_order::acq_rel) - 1;
+
+				if (index == 0)
+				{
+					waitList_.findAndRelease([&](JobHandle handle) {
+						if (handle.promise().state.counter == counter)
+						{
+							readyQueue_.push(handle);
+							return true;
+						}
+						return false;
+					});
+					handle->destroy();
+				}
 			}
 		}
+		return true;
 	}
 }

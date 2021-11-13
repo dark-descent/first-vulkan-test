@@ -43,6 +43,8 @@ namespace NovaEngine::Graphics
 		for (size_t i = 0; i < commandBuffers_.buffers.size(); i++)
 			recordCommands(i);
 
+		vkDeviceWaitIdle(*device_);
+
 		return true;
 	}
 

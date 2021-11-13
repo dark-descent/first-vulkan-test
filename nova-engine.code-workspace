@@ -86,7 +86,12 @@
 			"mutex": "cpp",
 			"condition_variable": "cpp",
 			"csignal": "cpp",
-			"coroutine": "cpp"
+			"coroutine": "cpp",
+			"compare": "cpp",
+			"concepts": "cpp",
+			"numbers": "cpp",
+			"semaphore": "cpp",
+			"stop_token": "cpp"
 		}
 	}
 }

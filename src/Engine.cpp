@@ -128,7 +128,6 @@ namespace NovaEngine
 			l->info(name, " initialized!");
 			return true;
 		}
-
 	}
 
 	bool Engine::onInitialize(const char* gameStartupScript)
@@ -169,7 +168,7 @@ namespace NovaEngine
 
 		CHECK_REJECT(initSubSystem("Graphics Manager", &graphicsManager, gameWindow.glfwWindow()), rejectGameConfig, "Could not create graphics stack!");
 
-		CHECK_REJECT(jobScheduler.initialize(1000, 7), rejectGameConfig, "Could not initialize Job System!");
+		CHECK_REJECT(jobScheduler.initialize(10000, std::thread::hardware_concurrency() - 1), rejectGameConfig, "Could not initialize Job System!");
 
 		return true;
 	}
@@ -214,15 +213,51 @@ namespace NovaEngine
 		return isRunning_;
 	}
 
+	static size_t i = 0;
+	static size_t j = 0;
+
+	JOB(testJob)
+	{
+		printf("i = %i\n", i++);
+		JOB_RETURN;
+	}
+
+	JOB(testJob2)
+	{
+		printf("i2 = %i\n", j += 2);
+		JOB_RETURN;
+	}
+
+	JOB(renderJob)
+	{
+		scheduler->runJob(testJob2);
+
+		engine->graphicsManager.draw();
+		JOB_RETURN;
+	}
+
+	JOB(glfwProcessJob)
+	{
+		scheduler->runJob(testJob2);
+
+		glfwPollEvents();
+		JOB_RETURN;
+	}
+
 	JOB(engineLoop)
 	{
-		glfwPollEvents();
-		engine->graphicsManager.draw();
+		scheduler->runJob(testJob);
 
-		if (engine->gameWindow.isOpen())
-			scheduler->runJob(engineLoop);
-		else
-			printf("exit");
+		JobSystem::Counter* c = scheduler->runJob(glfwProcessJob);
+
+		awaitCounter(c);
+
+		c = scheduler->runJob(renderJob);
+		
+		awaitCounter(c);
+		
+		scheduler->runJob(engineLoop);
+		
 		JOB_RETURN;
 	}
 
@@ -232,15 +267,15 @@ namespace NovaEngine
 		{
 			Logger::get()->info("starting engine...");
 
-			const size_t jobsCount = 1;
+			isRunning_ = true;
 
 			jobScheduler.runJob(engineLoop);
 
-			isRunning_ = true;
+			jobScheduler.exec([&] { return gameWindow.isOpen(); }, [&] {
 
-			jobScheduler.exec();
+			});
 
-			isRunning_  = false;
+			isRunning_ = false;
 		}
 	}
 
