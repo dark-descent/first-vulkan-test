@@ -247,7 +247,7 @@ namespace NovaEngine::Graphics
 		Vk::Surface createSurface(Vk::Instance& instance, GLFWwindow* window);
 		Vk::PhysicalDevice pickPhysicalDevice(Vk::Instance& instance, Vk::Surface& surface, const std::vector<const char*>& extensions = defaultDeviceExtensions);
 		Vk::Device createDevice(Vk::PhysicalDevice& physicalDevice, Vk::Surface& surface, const std::vector<const char*>& extensions = defaultDeviceExtensions, const std::vector<const char*>& layers = defaultLayers);
-		Vk::SwapChain createSwapChain(Vk::PhysicalDevice& physicalDevice, Vk::Device& device, Vk::Surface& surface, GLFWwindow* window);
+		Vk::SwapChain createSwapChain(Vk::PhysicalDevice& physicalDevice, Vk::Device& device, Vk::Surface& surface, GLFWwindow* window, Vk::SwapChain* oldSwapChain);
 		Vk::RenderPass createRenderPass(Vk::Device& device, Vk::SwapChain& swapChain);
 		Vk::Pipeline createPipline(Vk::Device& device, Vk::SwapChain& swapChain, Vk::RenderPass& renderPass);
 		Vk::CommandPool createCommandPool(Vk::PhysicalDevice& physicalDevice, Vk::Device& device, Vk::Surface& surface);
