@@ -7,15 +7,18 @@ namespace NovaEngine::Graphics
 	void GraphicsManager::onFrameBufferResizedHandler(GLFWwindow* window, int width, int height)
 	{
 		GraphicsManager* m = static_cast<GraphicsManager*>(glfwGetWindowUserPointer(window));
+
+
 		if (m != nullptr)
 		{
+			m->draw();
 			m->initSwapChain(true);
 
 			for (size_t i = 0; i < m->commandBuffers_.buffers.size(); i++)
 				m->recordCommands(i);
-
-			m->draw();
 		}
+
+		Logger::get()->info("frame buffer resized!");
 	}
 
 	bool GraphicsManager::onInitialize(GLFWwindow* window)
@@ -69,14 +72,17 @@ namespace NovaEngine::Graphics
 		{
 			Logger::get()->info("Recreating swapchain...");
 			vkDeviceWaitIdle(*device_);
+			Vk::SwapChain newSwapChain = VkFactory::createSwapChain(physicalDevice_, device_, surface_, window_, &swapChain_);
 			destroySwapChain();
+			swapChain_ = newSwapChain;
+		}
+		else
+		{
+			swapChain_ = VkFactory::createSwapChain(physicalDevice_, device_, surface_, window_);
 		}
 
-		swapChain_ = VkFactory::createSwapChain(physicalDevice_, device_, surface_, window_);
 		renderPass_ = VkFactory::createRenderPass(device_, swapChain_);
-
 		swapChain_.createFrameBuffers(renderPass_);
-
 		pipeline_ = VkFactory::createPipline(device_, swapChain_, renderPass_);
 		commandPool_ = VkFactory::createCommandPool(physicalDevice_, device_, surface_);
 		commandBuffers_ = VkFactory::createCommandBuffers(device_, swapChain_, commandPool_);
@@ -138,8 +144,13 @@ namespace NovaEngine::Graphics
 
 		if (result == VK_ERROR_OUT_OF_DATE_KHR)
 		{
+			Logger::get()->info("out of dat acquire!");
 			initSwapChain(true);
 			return;
+		}
+		else if (result == VK_SUBOPTIMAL_KHR)
+		{
+			Logger::get()->info("suboptimal acquire!");
 		}
 		else if (result != VK_SUCCESS)
 		{
@@ -189,7 +200,10 @@ namespace NovaEngine::Graphics
 		result = vkQueuePresentKHR(device_.presentationQueue, &presentInfo);
 
 		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+		{
+			Logger::get()->info("suboptimal acquire!");
 			initSwapChain(true);
+		}
 		else if (result != VK_SUCCESS)
 			throw std::runtime_error("failed to present swap chain image!");
 

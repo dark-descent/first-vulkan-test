@@ -179,7 +179,7 @@ namespace NovaEngine::Graphics
 			return d;
 		}
 
-		Vk::SwapChain createSwapChain(Vk::PhysicalDevice& physicalDevice, Vk::Device& device, Vk::Surface& surface, GLFWwindow* window)
+		Vk::SwapChain createSwapChain(Vk::PhysicalDevice& physicalDevice, Vk::Device& device, Vk::Surface& surface, GLFWwindow* window, Vk::SwapChain* oldSwapChain)
 		{
 			SwapChainSupportDetails swapChainSupport = VkUtils::querySwapChainSupport(*physicalDevice, *surface);
 
@@ -222,11 +222,7 @@ namespace NovaEngine::Graphics
 			createInfo.presentMode = presentMode;
 			createInfo.clipped = VK_TRUE;
 
-			/**
-			 * @todo
-			 *  - pass old swapchain handle when the framebuffer resized
-			 */
-			createInfo.oldSwapchain = VK_NULL_HANDLE;
+			createInfo.oldSwapchain = oldSwapChain == nullptr ? VK_NULL_HANDLE : *(*oldSwapChain);
 
 			VkSwapchainKHR swapChain;
 

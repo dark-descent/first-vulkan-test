@@ -213,49 +213,11 @@ namespace NovaEngine
 		return isRunning_;
 	}
 
-	static size_t i = 0;
-	static size_t j = 0;
-
-	JOB(testJob)
-	{
-		printf("i = %i\n", i++);
-		JOB_RETURN;
-	}
-
-	JOB(testJob2)
-	{
-		printf("i2 = %i\n", j += 2);
-		JOB_RETURN;
-	}
-
-	JOB(renderJob)
-	{
-		scheduler->runJob(testJob2);
-
-		engine->graphicsManager.draw();
-		JOB_RETURN;
-	}
-
-	JOB(glfwProcessJob)
-	{
-		scheduler->runJob(testJob2);
-
-		glfwPollEvents();
-		JOB_RETURN;
-	}
-
 	JOB(engineLoop)
 	{
-		scheduler->runJob(testJob);
+		glfwPollEvents();
+		engine->graphicsManager.draw();
 
-		JobSystem::Counter* c = scheduler->runJob(glfwProcessJob);
-
-		awaitCounter(c);
-
-		c = scheduler->runJob(renderJob);
-		
-		awaitCounter(c);
-		
 		scheduler->runJob(engineLoop);
 		
 		JOB_RETURN;
@@ -272,7 +234,7 @@ namespace NovaEngine
 			jobScheduler.runJob(engineLoop);
 
 			jobScheduler.exec([&] { return gameWindow.isOpen(); }, [&] {
-
+				// callback for each loop iteration
 			});
 
 			isRunning_ = false;

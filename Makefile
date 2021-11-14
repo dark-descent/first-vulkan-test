@@ -47,6 +47,8 @@ SHADERS_OUT = $(SHADER_VERT_OUT) $(SHADER_FRAG_OUT)
 
 all: test-game
 
+engine: $(OUT_FILE)
+
 test-game: $(OUT_FILE) compile-shaders test-game-scripts
 	@mkdir -p $(TEST_GAME_OUT)
 	@cp $(OUT_FILE) $(TEST_GAME_OUT)/$(ENGINE_NAME)
@@ -87,6 +89,7 @@ out/assets/%.frag.spv: %.frag
 	@mkdir -p $(@D)
 	@glslc $< -o $@
 
+
 run:
 	@$(MAKE) test-game -j
 	@echo "-------- [ starting game ] --------\n"
@@ -108,3 +111,10 @@ clean:
 clear:
 	$(MAKE) clean
 	clear
+
+build-container:
+	docker build -t nova-engine:latest .
+
+run-container:
+	xhost +
+	docker run --rm -it --net=host --ipc=host -e DISPLAY=$$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix --volume="$$HOME/.Xauthority:/root/.Xauthority:rw" --volume="$$(pwd):/nova-engine:rw" nova-engine:latest

@@ -30,6 +30,8 @@ namespace NovaEngine::JobSystem
 		while (threadsRunning_.load(std::memory_order::acquire) != 1)
 			; // wait (spin lock)
 
+		printf("Thread with threadID %i started...\n", threadID);
+
 		JobHandle jobHandle;
 		while (threadsRunning_)
 		{
