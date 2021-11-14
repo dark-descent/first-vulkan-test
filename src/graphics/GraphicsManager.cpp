@@ -78,7 +78,7 @@ namespace NovaEngine::Graphics
 		}
 		else
 		{
-			swapChain_ = VkFactory::createSwapChain(physicalDevice_, device_, surface_, window_);
+			swapChain_ = VkFactory::createSwapChain(physicalDevice_, device_, surface_, window_, nullptr);
 		}
 
 		renderPass_ = VkFactory::createRenderPass(device_, swapChain_);
