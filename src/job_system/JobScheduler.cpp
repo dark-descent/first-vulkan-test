@@ -133,6 +133,8 @@ namespace NovaEngine::JobSystem
 						return false;
 					});
 					handle->destroy();
+					
+					delete counter;
 				}
 			}
 		}
