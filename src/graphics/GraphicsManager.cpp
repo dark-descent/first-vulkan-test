@@ -8,17 +8,8 @@ namespace NovaEngine::Graphics
 	{
 		GraphicsManager* m = static_cast<GraphicsManager*>(glfwGetWindowUserPointer(window));
 
-
 		if (m != nullptr)
-		{
-			m->draw();
-			m->initSwapChain(true);
-
-			for (size_t i = 0; i < m->commandBuffers_.buffers.size(); i++)
-				m->recordCommands(i);
-		}
-
-		Logger::get()->info("frame buffer resized!");
+			m->didResize = true;
 	}
 
 	bool GraphicsManager::onInitialize(GLFWwindow* window)
@@ -70,22 +61,30 @@ namespace NovaEngine::Graphics
 	{
 		if (isInitialized() && recreate)
 		{
-			Logger::get()->info("Recreating swapchain...");
 			vkDeviceWaitIdle(*device_);
 			Vk::SwapChain newSwapChain = VkFactory::createSwapChain(physicalDevice_, device_, surface_, window_, &swapChain_);
-			destroySwapChain();
+			
+			commandPool_.destroy();
+			swapChain_.destroyFrameBuffers();
+			renderPass_.destroy();
+			swapChain_.destroy();
+
 			swapChain_ = newSwapChain;
+
+			renderPass_ = VkFactory::createRenderPass(device_, swapChain_);
+			swapChain_.createFrameBuffers(renderPass_);
+			commandPool_ = VkFactory::createCommandPool(physicalDevice_, device_, surface_);
+			commandBuffers_ = VkFactory::createCommandBuffers(device_, swapChain_, commandPool_);
 		}
 		else
 		{
 			swapChain_ = VkFactory::createSwapChain(physicalDevice_, device_, surface_, window_, nullptr);
+			renderPass_ = VkFactory::createRenderPass(device_, swapChain_);
+			swapChain_.createFrameBuffers(renderPass_);
+			pipeline_ = VkFactory::createPipline(device_, swapChain_, renderPass_);
+			commandPool_ = VkFactory::createCommandPool(physicalDevice_, device_, surface_);
+			commandBuffers_ = VkFactory::createCommandBuffers(device_, swapChain_, commandPool_);
 		}
-
-		renderPass_ = VkFactory::createRenderPass(device_, swapChain_);
-		swapChain_.createFrameBuffers(renderPass_);
-		pipeline_ = VkFactory::createPipline(device_, swapChain_, renderPass_);
-		commandPool_ = VkFactory::createCommandPool(physicalDevice_, device_, surface_);
-		commandBuffers_ = VkFactory::createCommandBuffers(device_, swapChain_, commandPool_);
 	}
 
 	void GraphicsManager::destroySwapChain()
@@ -123,6 +122,21 @@ namespace NovaEngine::Graphics
 
 		vkCmdBindPipeline(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, *pipeline_);
 
+		VkViewport viewport = {};
+		viewport.x = 0.0f;
+		viewport.y = 0.0f;
+		viewport.width = (float)swapChain_.extent.width;
+		viewport.height = (float)swapChain_.extent.height;
+		viewport.minDepth = 0.0f;
+		viewport.maxDepth = 1.0f;
+
+		vkCmdSetViewport(buf, 0, 1, &viewport);
+
+		VkRect2D siccors = {};
+		siccors.offset = { 0, 0 };
+		siccors.extent = swapChain_.extent;
+		vkCmdSetScissor(buf, 0, 1, &siccors);
+
 		vkCmdDraw(buf, 3, 1, 0, 0);
 
 		vkCmdEndRenderPass(buf);
@@ -144,13 +158,9 @@ namespace NovaEngine::Graphics
 
 		if (result == VK_ERROR_OUT_OF_DATE_KHR)
 		{
-			Logger::get()->info("out of dat acquire!");
 			initSwapChain(true);
+			draw();
 			return;
-		}
-		else if (result == VK_SUBOPTIMAL_KHR)
-		{
-			Logger::get()->info("suboptimal acquire!");
 		}
 		else if (result != VK_SUCCESS)
 		{
@@ -182,6 +192,8 @@ namespace NovaEngine::Graphics
 
 		vkResetFences(*device_, 1, &syncObjects_.inFlightFences[currentFrame]);
 
+		recordCommands(imageIndex);
+
 		if (vkQueueSubmit(device_.graphicsQueue, 1, &submitInfo, syncObjects_.inFlightFences[currentFrame]) != VK_SUCCESS)
 			throw std::runtime_error("failed to submit draw command buffer!");
 
@@ -199,10 +211,12 @@ namespace NovaEngine::Graphics
 
 		result = vkQueuePresentKHR(device_.presentationQueue, &presentInfo);
 
-		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || didResize)
 		{
-			Logger::get()->info("suboptimal acquire!");
+			// Logger::get()->info("suboptimal acquire!");
 			initSwapChain(true);
+			didResize = false;
+			draw();
 		}
 		else if (result != VK_SUCCESS)
 			throw std::runtime_error("failed to present swap chain image!");

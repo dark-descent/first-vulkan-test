@@ -391,6 +391,18 @@ namespace NovaEngine::Graphics
 			colorBlending.blendConstants[2] = 0.0f;
 			colorBlending.blendConstants[3] = 0.0f;
 
+			VkDynamicState dynamicStates[] = {
+				VK_DYNAMIC_STATE_VIEWPORT,
+				VK_DYNAMIC_STATE_SCISSOR,
+			};
+
+			VkPipelineDynamicStateCreateInfo dynStateCreateInfo = {};
+			dynStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+			dynStateCreateInfo.pNext = nullptr;
+			dynStateCreateInfo.flags = 0;
+			dynStateCreateInfo.dynamicStateCount = 2;
+			dynStateCreateInfo.pDynamicStates = dynamicStates;
+
 			VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 			pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 			pipelineLayoutInfo.setLayoutCount = 0;
@@ -415,6 +427,7 @@ namespace NovaEngine::Graphics
 			pipelineInfo.renderPass = *renderPass;
 			pipelineInfo.subpass = 0;
 			pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
+			pipelineInfo.pDynamicState = &dynStateCreateInfo;
 
 			VkPipeline pipeline;
 
@@ -436,6 +449,7 @@ namespace NovaEngine::Graphics
 			VkCommandPoolCreateInfo poolInfo = {};
 			poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 			poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
+			poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
 			VkCommandPool commandPool;
 

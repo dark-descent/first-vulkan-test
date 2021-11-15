@@ -23,6 +23,7 @@ namespace NovaEngine::Graphics
 		Vk::CommandPool commandPool_;
 		Vk::CommandBufferGroup commandBuffers_;
 		Vk::SyncObjects syncObjects_;
+		bool didResize;
 
 		ENGINE_SUB_SYSTEM_CTOR(GraphicsManager),
 			window_(nullptr),
@@ -35,7 +36,8 @@ namespace NovaEngine::Graphics
 			pipeline_(),
 			commandPool_(),
 			commandBuffers_(),
-			syncObjects_()
+			syncObjects_(),
+			didResize(false)
 		{};
 
 	protected:
