@@ -44,6 +44,8 @@ namespace NovaEngine::Graphics
 		VkExtent2D chooseSwapExtent(VkSurfaceCapabilitiesKHR capabilities, GLFWwindow* window);		
 	
 		VkShaderModule createShaderModule(const VkDevice& device, const std::vector<char>& code);
+
+		uint32_t findMemoryType(const VkPhysicalDevice& physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties);
 	};
 };
 

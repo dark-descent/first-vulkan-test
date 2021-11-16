@@ -45,6 +45,8 @@
 
 #include <vulkan/vulkan.h>
 
+#include <glm/glm.hpp>
+
 #pragma region DEFINES
 
 #ifdef DEBUG

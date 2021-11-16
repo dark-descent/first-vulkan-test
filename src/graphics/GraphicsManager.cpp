@@ -4,6 +4,15 @@
 
 namespace NovaEngine::Graphics
 {
+	const std::vector<Vertex> vertices = {
+		{ { 0.0f, -0.5f }, { 1.0f, 0.0f, 0.0f } },
+		{ { 0.5f, 0.5f }, { 0.0f, 1.0f, 0.0f } },
+		{ { -0.5f, 0.5f }, { 0.0f, 0.0f, 1.0f } }
+	};
+
+	VkBuffer vertexBuffer;
+	VkDeviceMemory vertexBufferMemory;
+
 	void GraphicsManager::onFrameBufferResizedHandler(GLFWwindow* window, int width, int height)
 	{
 		GraphicsManager* m = static_cast<GraphicsManager*>(glfwGetWindowUserPointer(window));
@@ -34,8 +43,27 @@ namespace NovaEngine::Graphics
 			Logger::get()->error(err.what());
 		}
 
-		for (size_t i = 0; i < commandBuffers_.buffers.size(); i++)
-			recordCommands(i);
+		vertexBuffer = VkFactory::createVertexBuffer(device_, sizeof(vertices[0]) * vertices.size());
+
+
+		VkMemoryRequirements memRequirements;
+		vkGetBufferMemoryRequirements(*device_, vertexBuffer, &memRequirements);
+
+		VkMemoryAllocateInfo allocInfo = {};
+		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+		allocInfo.allocationSize = memRequirements.size;
+		allocInfo.memoryTypeIndex = VkUtils::findMemoryType(*physicalDevice_, memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+		if (vkAllocateMemory(*device_, &allocInfo, nullptr, &vertexBufferMemory) != VK_SUCCESS) {
+			throw std::runtime_error("failed to allocate vertex buffer memory!");
+		}
+
+		vkBindBufferMemory(*device_, vertexBuffer, vertexBufferMemory, 0);
+
+		void* data;
+		vkMapMemory(*device_, vertexBufferMemory, 0, sizeof(vertices[0]) * vertices.size(), 0, &data);
+		memcpy(data, vertices.data(), (size_t)sizeof(vertices[0]) * vertices.size());
+		vkUnmapMemory(*device_, vertexBufferMemory);
 
 		vkDeviceWaitIdle(*device_);
 
@@ -46,9 +74,9 @@ namespace NovaEngine::Graphics
 	{
 		vkDeviceWaitIdle(*device_);
 		syncObjects_.destroy();
-
+		vkFreeMemory(*device_, vertexBufferMemory, nullptr);
+		vkDestroyBuffer(*device_, vertexBuffer, nullptr);
 		destroySwapChain();
-
 		device_.destroy();
 		physicalDevice_.destroy();
 		surface_.destroy();
@@ -63,7 +91,7 @@ namespace NovaEngine::Graphics
 		{
 			vkDeviceWaitIdle(*device_);
 			Vk::SwapChain newSwapChain = VkFactory::createSwapChain(physicalDevice_, device_, surface_, window_, &swapChain_);
-			
+
 			commandPool_.destroy();
 			swapChain_.destroyFrameBuffers();
 			renderPass_.destroy();
@@ -136,6 +164,10 @@ namespace NovaEngine::Graphics
 		siccors.offset = { 0, 0 };
 		siccors.extent = swapChain_.extent;
 		vkCmdSetScissor(buf, 0, 1, &siccors);
+
+		VkBuffer vertexBuffers[] = { vertexBuffer };
+		VkDeviceSize offsets[] = { 0 };
+		vkCmdBindVertexBuffers(buf, 0, 1, vertexBuffers, offsets);
 
 		vkCmdDraw(buf, 3, 1, 0, 0);
 

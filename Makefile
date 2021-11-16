@@ -8,7 +8,7 @@ TEST_GAME_SCRIPTS_OUT = $(patsubst test-game/src/%.ts,out/assets/scripts/%.js,$(
 
 V8_DIR = ~/src/v8/v8/out.gn/x64.release/obj
 
-_LIBS = glfw vulkan dl v8
+_LIBS = glfw vulkan dl v8 m
 _INCLUDE_DIRS = /usr/include/v8 include
 _DEFINES = DEBUG
 LIBS = $(patsubst %,-l%,$(_LIBS))
