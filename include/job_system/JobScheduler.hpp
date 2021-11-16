@@ -61,7 +61,7 @@ namespace NovaEngine::JobSystem
 		bool onInitialize(size_t maxJobs, size_t executionThreads);
 		bool onTerminate();
 		bool runNextJob(JobHandle* handleOut);
-		void threadEntry();
+		void threadEntry(size_t threadID);
 		bool handleJobYield(JobHandle* handle);
 
 	public:

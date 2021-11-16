@@ -1,13 +1,16 @@
 #include "job_system/JobScheduler.hpp"
+#include "Logger.hpp"
 
 namespace NovaEngine::JobSystem
 {
+	static std::atomic<size_t> threadIdCounter = 0;
+
 	bool JobScheduler::onInitialize(size_t maxJobs, size_t executionThreads)
 	{
 		maxJobs_ = maxJobs == 0 ? ENGINE_JOB_SYSTEM_MAX_JOBS : maxJobs;
 
 		for (size_t i = 0; i < executionThreads; i++)
-			threads_.push_back(std::thread([&] { threadEntry(); }));
+			threads_.push_back(std::thread([&] { threadEntry(threadIdCounter.fetch_add(1, std::memory_order::acq_rel)); }));
 
 		return true;
 	}
@@ -23,14 +26,12 @@ namespace NovaEngine::JobSystem
 		return true;
 	}
 
-	void JobScheduler::threadEntry()
+	void JobScheduler::threadEntry(size_t threadID)
 	{
-		std::thread::id threadID = std::this_thread::get_id();
-
 		while (threadsRunning_.load(std::memory_order::acquire) != 1)
 			; // wait (spin lock)
 
-		printf("Thread with threadID %i started...\n", threadID);
+		Logger::get()->info("Thread with threadID ", std::to_string(threadID), " started...");
 
 		JobHandle jobHandle;
 		while (threadsRunning_)
