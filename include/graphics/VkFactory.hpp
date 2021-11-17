@@ -258,24 +258,17 @@ namespace NovaEngine::Graphics
 	{
 		namespace
 		{
-
-			std::vector<const char*> defaultLayers = {
-#ifdef DEBUG
-			"VK_LAYER_KHRONOS_validation",
-#endif
-			};
-
 			const std::vector<const char*> defaultDeviceExtensions = {
 				VK_KHR_SWAPCHAIN_EXTENSION_NAME
 			};
 		};
 
-		Vk::Instance createInstance(const std::vector<const char*>& layers = defaultLayers);
-		Vk::Surface createSurface(Vk::Instance& instance, GLFWwindow* window);
-		Vk::PhysicalDevice pickPhysicalDevice(Vk::Instance& instance, Vk::Surface& surface, const std::vector<const char*>& extensions = defaultDeviceExtensions);
-		Vk::Device createDevice(Vk::PhysicalDevice& physicalDevice, Vk::Surface& surface, const std::vector<const char*>& extensions = defaultDeviceExtensions, const std::vector<const char*>& layers = defaultLayers);
+		VkInstance createInstance(const std::vector<const char*>& layers, VkDebugUtilsMessengerEXT* debugExt = nullptr);
+		VkSurfaceKHR createSurface(VkInstance& instance, GLFWwindow* window);
+		VkPhysicalDevice pickPhysicalDevice(const VkInstance& instance, const VkSurfaceKHR& surface, const std::vector<const char*>& extensions);
+		VkDevice createDevice(const VkPhysicalDevice& physicalDevice, QueueFamilyIndices& indices, const std::vector<const char*>& extensions, const std::vector<const char*>& layers);
 		Vk::SwapChain createSwapChain(Vk::PhysicalDevice& physicalDevice, Vk::Device& device, Vk::Surface& surface, GLFWwindow* window, Vk::SwapChain* oldSwapChain);
-		Vk::RenderPass createRenderPass(Vk::Device& device, Vk::SwapChain& swapChain);
+		VkRenderPass createRenderPass(const VkDevice& device, const VkFormat& format);
 		Vk::Pipeline createPipline(Vk::Device& device, Vk::SwapChain& swapChain, Vk::RenderPass& renderPass);
 		Vk::CommandPool createCommandPool(Vk::PhysicalDevice& physicalDevice, Vk::Device& device, Vk::Surface& surface);
 		Vk::CommandBufferGroup createCommandBuffers(Vk::Device& device, Vk::SwapChain& swapChain, Vk::CommandPool& commandPool);

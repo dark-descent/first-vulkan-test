@@ -166,9 +166,17 @@ namespace NovaEngine
 
 		CHECK_REJECT(gameWindow.create(configManager.getConfig()->name.c_str(), configManager.getConfig()->window), rejectGameConfig, "Could not create Game Window!");
 
-		CHECK_REJECT(initSubSystem("Graphics Manager", &graphicsManager, gameWindow.glfwWindow()), rejectGameConfig, "Could not create graphics stack!");
+		Graphics::GraphicsConfig config = {
+			
+		};
+
+		CHECK_REJECT(initSubSystem("Graphics Manager", &graphicsManager, &config), rejectGameConfig, "Could not create graphics stack!");
 
 		CHECK_REJECT(jobScheduler.initialize(10000, std::thread::hardware_concurrency() - 1), rejectGameConfig, "Could not initialize Job System!");
+
+		auto c = graphicsManager.createContext(gameWindow.glfwWindow());
+
+		c->swapChain().recreate();
 
 		return true;
 	}
@@ -216,7 +224,7 @@ namespace NovaEngine
 	JOB(engineLoop)
 	{
 		glfwPollEvents();
-		engine->graphicsManager.draw();
+		// engine->graphicsManager.draw();
 
 		scheduler->runJob(engineLoop);
 		

@@ -4,53 +4,56 @@
 #include "SubSystem.hpp"
 #include "framework.hpp"
 #include "graphics/VkFactory.hpp"
+#include "graphics/Context.hpp"
 
 namespace NovaEngine::Graphics
 {
-	class GraphicsManager : public SubSystem<GLFWwindow*>
+	struct GraphicsConfig
+	{
+
+	};
+
+	class GraphicsManager : public SubSystem<GraphicsConfig*>
 	{
 	private:
-		static void onFrameBufferResizedHandler(GLFWwindow* window, int width, int height);
+		static std::vector<const char*> defaultLayers;
+		static const std::vector<const char*> defaultExtensions;
 
-		GLFWwindow* window_;
-		Vk::Instance instance_;
-		Vk::Surface surface_;
-		Vk::PhysicalDevice physicalDevice_;
-		Vk::Device device_;
-		Vk::SwapChain swapChain_;
-		Vk::RenderPass renderPass_;
-		Vk::Pipeline pipeline_;
-		Vk::CommandPool commandPool_;
-		Vk::CommandBufferGroup commandBuffers_;
-		Vk::SyncObjects syncObjects_;
-		bool didResize;
+		VkDebugUtilsMessengerEXT debugExt;
+		VkInstance instance_;
+		VkPhysicalDevice physicalDevice_;
+		VkDevice device_;
+
+		QueueFamilyIndices queueFamilyIndices_;
+		SwapChainSupportDetails swapChainSupportDetails_;
+		VkSurfaceFormatKHR surfaceFormat_;
+
+		std::vector<Context> contexts_;
+		bool isDeviceInitialized_;
 
 		ENGINE_SUB_SYSTEM_CTOR(GraphicsManager),
-			window_(nullptr),
-			instance_(),
-			surface_(),
-			physicalDevice_(),
-			device_(),
-			swapChain_(),
-			renderPass_(),
-			pipeline_(),
-			commandPool_(),
-			commandBuffers_(),
-			syncObjects_(),
-			didResize(false)
+			debugExt(VK_NULL_HANDLE),
+			instance_(VK_NULL_HANDLE),
+			physicalDevice_(VK_NULL_HANDLE),
+			device_(VK_NULL_HANDLE),
+			queueFamilyIndices_(),
+			swapChainSupportDetails_(),
+			surfaceFormat_(),
+			contexts_(),
+			isDeviceInitialized_(false)
 		{};
 
+		bool initializeDevice(const VkSurfaceKHR& surface);
+
 	protected:
-		bool onInitialize(GLFWwindow* window);
+		bool onInitialize(GraphicsConfig* config);
 		bool onTerminate();
-		void initSwapChain(bool recreate = false);
-		void destroySwapChain();
 
-	public:
-		void draw();
-		void recordCommands(size_t index);
+		Context* createContext(GLFWwindow* window);
 
-		friend class NovaEngine::Engine;
+		friend class Context;
+		friend class SwapChain;
+
 	};
 };
 

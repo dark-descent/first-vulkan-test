@@ -49,7 +49,7 @@ namespace NovaEngine::Graphics
 
 		};
 
-		Vk::Instance createInstance(const std::vector<const char*>& layers)
+		VkInstance createInstance(const std::vector<const char*>& layers, VkDebugUtilsMessengerEXT* debugExt)
 		{
 			if (!VkUtils::supportLayers(layers))
 				throw std::runtime_error("No support for provided layers!");
@@ -88,53 +88,45 @@ namespace NovaEngine::Graphics
 			VkInstance instance = VK_NULL_HANDLE;
 
 			if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS)
-				throw std::runtime_error("failed to create instance!");
+				throw std::runtime_error("Failed to create instance!");
 
-			VkDebugUtilsMessengerEXT debugExt = VK_NULL_HANDLE;
 #ifdef DEBUG
-			if (VkUtils::createDebugUtilsMessengerEXT(instance, &debugCreateInfo, nullptr, &debugExt) != VK_SUCCESS)
-				throw std::runtime_error("failed to set up debug messenger!");
+			if (VkUtils::createDebugUtilsMessengerEXT(instance, &debugCreateInfo, nullptr, debugExt) != VK_SUCCESS)
+				throw std::runtime_error("Failed to set up debug messenger!");
 #endif
 
-			return Vk::Instance(instance, debugExt);
+			return instance;
 		}
 
-		Vk::Surface createSurface(Vk::Instance& instance, GLFWwindow* window)
+		VkSurfaceKHR createSurface(VkInstance& instance, GLFWwindow* window)
 		{
 			VkSurfaceKHR surface;
-			if (glfwCreateWindowSurface(*instance, window, nullptr, &surface) != VK_SUCCESS)
-				throw std::runtime_error("failed to create window surface!");
-			return Vk::Surface(surface, *instance);
+			if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS)
+				throw std::runtime_error("Failed to create window surface!");
+			return surface;
 		}
 
-		Vk::PhysicalDevice pickPhysicalDevice(Vk::Instance& instance, Vk::Surface& surface, const std::vector<const char*>& extensions)
+		VkPhysicalDevice pickPhysicalDevice(const VkInstance& instance, const VkSurfaceKHR& surface, const std::vector<const char*>& extensions)
 		{
 			uint32_t deviceCount = 0;
-			vkEnumeratePhysicalDevices(*instance, &deviceCount, nullptr);
+			vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
 
 			if (deviceCount == 0)
-			{
-				throw std::runtime_error("failed to find GPUs with Vulkan support!");
-			}
+				throw std::runtime_error("Failed to find GPUs with Vulkan support!");
 
 			std::vector<VkPhysicalDevice> devices(deviceCount);
-			vkEnumeratePhysicalDevices(*instance, &deviceCount, devices.data());
+			
+			vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
 
 			for (const auto& device : devices)
-			{
-				if (VkUtils::isDeviceSuitable(device, *surface, extensions))
-				{
-					return Vk::PhysicalDevice(device);
-				}
-			}
+				if (VkUtils::isDeviceSuitable(device, surface, extensions))
+					return VkPhysicalDevice(device);
 
-			throw std::runtime_error("failed to find a suitable GPU!");
+			throw std::runtime_error("Failed to find a suitable GPU!");
 		}
 
-		Vk::Device createDevice(Vk::PhysicalDevice& physicalDevice, Vk::Surface& surface, const std::vector<const char*>& deviceExtensions, const std::vector<const char*>& validationLayers)
+		VkDevice createDevice(const VkPhysicalDevice& physicalDevice, QueueFamilyIndices& indices, const std::vector<const char*>& extensions, const std::vector<const char*>& layers)
 		{
-			QueueFamilyIndices indices = VkUtils::findQueueFamilies(*physicalDevice, *surface);
-
 			std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
 			std::set<uint32_t> uniqueQueueFamilies = { indices.graphicsFamily.value(), indices.presentFamily.value() };
 
@@ -158,116 +150,28 @@ namespace NovaEngine::Graphics
 
 			createInfo.pEnabledFeatures = &deviceFeatures;
 
-			createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
-			createInfo.ppEnabledExtensionNames = deviceExtensions.data();
+			createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
+			createInfo.ppEnabledExtensionNames = extensions.data();
 
 #ifdef DEBUG
-			createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
-			createInfo.ppEnabledLayerNames = validationLayers.data();
+			createInfo.enabledLayerCount = static_cast<uint32_t>(layers.size());
+			createInfo.ppEnabledLayerNames = layers.data();
 #else
 			createInfo.enabledLayerCount = 0;
 #endif
 
 			VkDevice device;
 
-			if (vkCreateDevice(*physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS)
+			if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS)
 				throw std::runtime_error("failed to create logical device!");
 
-			Vk::Device d = Vk::Device(device);
-			d.graphicsQueue = VkUtils::getGraphicsQueue(device, indices);
-			d.presentationQueue = VkUtils::getPresentationQueue(device, indices);
-			return d;
+			return device;
 		}
 
-		Vk::SwapChain createSwapChain(Vk::PhysicalDevice& physicalDevice, Vk::Device& device, Vk::Surface& surface, GLFWwindow* window, Vk::SwapChain* oldSwapChain)
-		{
-			SwapChainSupportDetails swapChainSupport = VkUtils::querySwapChainSupport(*physicalDevice, *surface);
-
-			VkSurfaceFormatKHR surfaceFormat = VkUtils::chooseSwapSurfaceFormat(swapChainSupport.formats);
-			VkPresentModeKHR presentMode = VkUtils::chooseSwapPresentMode(swapChainSupport.presentModes);
-			VkExtent2D extent = VkUtils::chooseSwapExtent(swapChainSupport.capabilities, window);
-
-			uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
-			if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount) {
-				imageCount = swapChainSupport.capabilities.maxImageCount;
-			}
-
-			VkSwapchainCreateInfoKHR createInfo = {};
-			createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-			createInfo.surface = *surface;
-
-			createInfo.minImageCount = imageCount;
-			createInfo.imageFormat = surfaceFormat.format;
-			createInfo.imageColorSpace = surfaceFormat.colorSpace;
-			createInfo.imageExtent = extent;
-			createInfo.imageArrayLayers = 1;
-			createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-
-			QueueFamilyIndices indices = VkUtils::findQueueFamilies(*physicalDevice, *surface);
-			uint32_t queueFamilyIndices[] = { indices.graphicsFamily.value(), indices.presentFamily.value() };
-
-			if (indices.graphicsFamily != indices.presentFamily)
-			{
-				createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-				createInfo.queueFamilyIndexCount = 2;
-				createInfo.pQueueFamilyIndices = queueFamilyIndices;
-			}
-			else
-			{
-				createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-			}
-
-			createInfo.preTransform = swapChainSupport.capabilities.currentTransform;
-			createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-			createInfo.presentMode = presentMode;
-			createInfo.clipped = VK_TRUE;
-
-			createInfo.oldSwapchain = oldSwapChain == nullptr ? VK_NULL_HANDLE : *(*oldSwapChain);
-
-			VkSwapchainKHR swapChain;
-
-			if (vkCreateSwapchainKHR(*device, &createInfo, nullptr, &swapChain) != VK_SUCCESS)
-				throw std::runtime_error("failed to create swap chain!");
-
-			Vk::SwapChain wrappedSwapChain(swapChain, *device);
-
-			vkGetSwapchainImagesKHR(*device, swapChain, &imageCount, nullptr);
-			wrappedSwapChain.images.resize(imageCount);
-			vkGetSwapchainImagesKHR(*device, swapChain, &imageCount, wrappedSwapChain.images.data());
-
-			wrappedSwapChain.format = surfaceFormat.format;
-			wrappedSwapChain.extent = extent;
-
-			wrappedSwapChain.imageViews.resize(imageCount);
-
-			for (size_t i = 0; i < imageCount; i++)
-			{
-				VkImageViewCreateInfo createInfo = {};
-				createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-				createInfo.image = wrappedSwapChain.images[i];
-				createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-				createInfo.format = surfaceFormat.format;
-				createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-				createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-				createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-				createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-				createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-				createInfo.subresourceRange.baseMipLevel = 0;
-				createInfo.subresourceRange.levelCount = 1;
-				createInfo.subresourceRange.baseArrayLayer = 0;
-				createInfo.subresourceRange.layerCount = 1;
-
-				if (vkCreateImageView(*device, &createInfo, nullptr, &wrappedSwapChain.imageViews[i]) != VK_SUCCESS)
-					throw std::runtime_error("failed to create image views!");
-			}
-
-			return wrappedSwapChain;
-		}
-
-		Vk::RenderPass createRenderPass(Vk::Device& device, Vk::SwapChain& swapChain)
+		VkRenderPass createRenderPass(const VkDevice& device, const VkFormat& format)
 		{
 			VkAttachmentDescription colorAttachment = {};
-			colorAttachment.format = swapChain.format;
+			colorAttachment.format = format;
 			colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 			colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 			colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -304,10 +208,10 @@ namespace NovaEngine::Graphics
 
 			VkRenderPass renderPass;
 
-			if (vkCreateRenderPass(*device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS)
+			if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS)
 				throw std::runtime_error("failed to create render pass!");
 
-			return Vk::RenderPass(renderPass, *device);
+			return renderPass;
 		}
 
 		Vk::Pipeline createPipline(Vk::Device& device, Vk::SwapChain& swapChain, Vk::RenderPass& renderPass)
