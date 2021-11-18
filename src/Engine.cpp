@@ -130,6 +130,8 @@ namespace NovaEngine
 		}
 	}
 
+	Graphics::Context* ctx = nullptr;
+
 	bool Engine::onInitialize(const char* gameStartupScript)
 	{
 		Logger::get()->info("Initializing Engine...");
@@ -174,9 +176,7 @@ namespace NovaEngine
 
 		CHECK_REJECT(jobScheduler.initialize(10000, std::thread::hardware_concurrency() - 1), rejectGameConfig, "Could not initialize Job System!");
 
-		auto c = graphicsManager.createContext(gameWindow.glfwWindow());
-
-		c->swapChain().recreate();
+		ctx = graphicsManager.createContext(gameWindow.glfwWindow());
 
 		return true;
 	}
@@ -224,6 +224,11 @@ namespace NovaEngine
 	JOB(engineLoop)
 	{
 		glfwPollEvents();
+		// ctx->record(0, [](const VkCommandBuffer& buf)
+		// {
+
+		// });
+		ctx->present();
 		// engine->graphicsManager.draw();
 
 		scheduler->runJob(engineLoop);

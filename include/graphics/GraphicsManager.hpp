@@ -24,26 +24,34 @@ namespace NovaEngine::Graphics
 		VkPhysicalDevice physicalDevice_;
 		VkDevice device_;
 
-		QueueFamilyIndices queueFamilyIndices_;
-		SwapChainSupportDetails swapChainSupportDetails_;
-		VkSurfaceFormatKHR surfaceFormat_;
+		QueueFamilies queueFamilies_;
 
 		std::vector<Context> contexts_;
 		bool isDeviceInitialized_;
+
+		size_t graphicsQueuePtr_;
+		size_t presentationQueuePtr_;
+
+		std::vector<VkQueue> graphicsQueues_;
+		std::vector<VkQueue> presentationQueues_;
 
 		ENGINE_SUB_SYSTEM_CTOR(GraphicsManager),
 			debugExt(VK_NULL_HANDLE),
 			instance_(VK_NULL_HANDLE),
 			physicalDevice_(VK_NULL_HANDLE),
 			device_(VK_NULL_HANDLE),
-			queueFamilyIndices_(),
-			swapChainSupportDetails_(),
-			surfaceFormat_(),
+			queueFamilies_(),
 			contexts_(),
-			isDeviceInitialized_(false)
+			isDeviceInitialized_(false),
+			graphicsQueuePtr_(0),
+			presentationQueuePtr_(0),
+			graphicsQueues_(),
+			presentationQueues_()
 		{};
 
 		bool initializeDevice(const VkSurfaceKHR& surface);
+		VkQueue getGraphicsQueue();
+		VkQueue getPresentationQueue();
 
 	protected:
 		bool onInitialize(GraphicsConfig* config);

@@ -12,6 +12,14 @@ namespace NovaEngine::Graphics
 	struct SwapChainOptions
 	{
 		bool vSyncEnabled = false;
+		size_t maxFrames = 3;
+	};
+
+	struct SwapChainSupportDetails
+	{
+		VkSurfaceCapabilitiesKHR capabilities;
+		std::vector<VkSurfaceFormatKHR> formats;
+		std::vector<VkPresentModeKHR> presentModes;
 	};
 
 	class SwapChain : public Initializable<Context*, SwapChainOptions*>
@@ -25,9 +33,13 @@ namespace NovaEngine::Graphics
 		uint32_t imageCount_;
 		std::vector<VkImage> images_;
 		std::vector<VkImageView> imageViews_;
+		std::vector<VkFramebuffer> frameBuffers_;
 
 		VkSwapchainCreateInfoKHR createInfo_;
 		VkImageViewCreateInfo imageViewCreateInfo_;
+
+		void createFrameBuffers();
+		void destroyFrameBuffers();
 
 	protected:
 		bool onInitialize(Context* context, SwapChainOptions* options = &defaultOptions);
@@ -41,12 +53,17 @@ namespace NovaEngine::Graphics
 			imageCount_(0),
 			images_(),
 			imageViews_(),
+			frameBuffers_(),
 			createInfo_(),
 			imageViewCreateInfo_()
 		{}
 
+		uint32_t imageCount() { return imageCount_; }
+
 		bool recreate(SwapChainOptions* options = nullptr);
 		void destroy(VkSwapchainKHR swapChain = VK_NULL_HANDLE);
+
+		const VkSwapchainKHR& get() { return swapChain_; }
 
 		friend class GraphicsManager;
 		friend class Context;

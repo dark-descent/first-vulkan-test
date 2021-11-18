@@ -5,23 +5,28 @@
 
 namespace NovaEngine::Graphics
 {
-	struct QueueFamilyIndices
+	struct QueueFamilies
 	{
-		std::optional<uint32_t> graphicsFamily;
-		std::optional<uint32_t> presentFamily;
+		struct QueueInfo
+		{
+			uint32_t index;
+			uint32_t maxQueues;
+
+			QueueInfo(uint32_t index = 0, uint32_t maxQueues = 0) : index(index), maxQueues(maxQueues) {}
+		};
+
+		std::optional<QueueInfo> graphics;
+		std::optional<QueueInfo> present;
+
+		QueueFamilies() : graphics(), present() {}
 
 		bool isComplete()
 		{
-			return graphicsFamily.has_value() && presentFamily.has_value();
+			return graphics.has_value() && present.has_value();
 		}
 	};
-
-	struct SwapChainSupportDetails
-	{
-		VkSurfaceCapabilitiesKHR capabilities;
-		std::vector<VkSurfaceFormatKHR> formats;
-		std::vector<VkPresentModeKHR> presentModes;
-	};
+	
+	struct SwapChainSupportDetails;
 
 	namespace VkUtils
 	{
@@ -33,10 +38,8 @@ namespace NovaEngine::Graphics
 
 		bool checkDeviceExtensionSupport(const VkPhysicalDevice& device, const std::vector<const char*>& extensions);
 		bool isDeviceSuitable(const VkPhysicalDevice& dev, const VkSurfaceKHR& surface, const std::vector<const char*>& extensions);
-		QueueFamilyIndices findQueueFamilies(const VkPhysicalDevice& device, const VkSurfaceKHR& surface);
-		VkQueue getGraphicsQueue(const VkDevice& device, const QueueFamilyIndices& indices);
-		VkQueue getPresentationQueue(const VkDevice& device, const QueueFamilyIndices& indices);
-
+		QueueFamilies findQueueFamilies(const VkPhysicalDevice& device, const VkSurfaceKHR& surface);
+		
 		SwapChainSupportDetails querySwapChainSupport(const VkPhysicalDevice& device, const VkSurfaceKHR& surface);
 
 		VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);

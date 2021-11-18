@@ -1,5 +1,6 @@
 #include "framework.hpp"
 #include "graphics/VkUtils.hpp"
+#include "graphics/SwapChain.hpp"
 
 namespace NovaEngine::Graphics
 {
@@ -83,7 +84,7 @@ namespace NovaEngine::Graphics
 
 		bool isDeviceSuitable(const VkPhysicalDevice& dev, const VkSurfaceKHR& surface, const std::vector<const char*>& extensions)
 		{
-			QueueFamilyIndices indices = findQueueFamilies(dev, surface);
+			QueueFamilies indices = findQueueFamilies(dev, surface);
 
 			bool extensionsSupported = checkDeviceExtensionSupport(dev, extensions);
 
@@ -125,51 +126,46 @@ namespace NovaEngine::Graphics
 			return details;
 		}
 
-		QueueFamilyIndices findQueueFamilies(const VkPhysicalDevice& device, const VkSurfaceKHR& surface)
+		QueueFamilies findQueueFamilies(const VkPhysicalDevice& device, const VkSurfaceKHR& surface)
 		{
-			QueueFamilyIndices indices;
+			QueueFamilies queueFamilies = {};
 
 			uint32_t queueFamilyCount = 0;
 			vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
 
-			std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-			vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+			printf("got queue family count of %u\n", queueFamilyCount);
+
+			std::vector<VkQueueFamilyProperties> props(queueFamilyCount);
+			vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, props.data());
 
 			int i = 0;
-			for (const auto& queueFamily : queueFamilies) {
-				if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-					indices.graphicsFamily = i;
-				}
-
+			for (const auto& queueFamily : props) 
+			{
 				VkBool32 presentSupport = false;
 				vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
 
-				if (presentSupport) {
-					indices.presentFamily = i;
+				if (presentSupport)
+				{
+					printf("got present queue index %u\n", i);
+					queueFamilies.present = QueueFamilies::QueueInfo(i, queueFamily.queueCount);
+				}
+				
+				if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+				{
+					if (!queueFamilies.graphics.has_value())
+					{
+						printf("got gfx queue index %u\n", i);
+						queueFamilies.graphics = QueueFamilies::QueueInfo(i, queueFamily.queueCount);
+					}
 				}
 
-				if (indices.isComplete()) {
+				if (queueFamilies.isComplete())
 					break;
-				}
 
 				i++;
 			}
 
-			return indices;
-		}
-
-		VkQueue getGraphicsQueue(const VkDevice& device, const QueueFamilyIndices& indices)
-		{
-			VkQueue queue;
-			vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &queue);
-			return queue;
-		}
-
-		VkQueue getPresentationQueue(const VkDevice& device, const QueueFamilyIndices& indices)
-		{
-			VkQueue queue;
-			vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &queue);
-			return queue;
+			return queueFamilies;
 		}
 
 		VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)

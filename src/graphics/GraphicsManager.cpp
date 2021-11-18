@@ -23,7 +23,7 @@ namespace NovaEngine::Graphics
 
 	bool GraphicsManager::onTerminate()
 	{
-		for(auto& ctx : contexts_)
+		for (auto& ctx : contexts_)
 			ctx.destroy();
 		return true;
 	}
@@ -32,18 +32,40 @@ namespace NovaEngine::Graphics
 	{
 		if (!isDeviceInitialized_ && (surface != VK_NULL_HANDLE))
 		{
+			printf("initialize device...\n");
 			physicalDevice_ = VkFactory::pickPhysicalDevice(instance_, surface, defaultExtensions);
-			queueFamilyIndices_ = VkUtils::findQueueFamilies(physicalDevice_, surface);
-			swapChainSupportDetails_ = VkUtils::querySwapChainSupport(physicalDevice_, surface);
-			surfaceFormat_ = VkUtils::chooseSwapSurfaceFormat(swapChainSupportDetails_.formats);
-			device_ = VkFactory::createDevice(physicalDevice_, queueFamilyIndices_, defaultExtensions, defaultLayers);
-
+			printf("find queue families...\n");
+			queueFamilies_ = VkUtils::findQueueFamilies(physicalDevice_, surface);
+			printf("create device...\n");
+			device_ = VkFactory::createDevice(physicalDevice_, queueFamilies_, defaultExtensions, defaultLayers);
+			printf("device created...\n");
 			isDeviceInitialized_ = true;
 
 			return true;
 		}
 		return false;
 	}
+
+	VkQueue GraphicsManager::getGraphicsQueue()
+	{
+		QueueFamilies::QueueInfo& info = queueFamilies_.graphics.value();
+		VkQueue queue;
+		vkGetDeviceQueue(device_, info.index, graphicsQueuePtr_, &queue);
+		graphicsQueuePtr_ = (graphicsQueuePtr_ + 1) % info.maxQueues;
+		printf("GraphicsManager::getGraphicsQueue()\n");
+		return queue;
+	}
+
+	VkQueue GraphicsManager::getPresentationQueue()
+	{
+		QueueFamilies::QueueInfo& info = queueFamilies_.present.value();
+		VkQueue queue;
+		vkGetDeviceQueue(device_, info.index, presentationQueuePtr_, &queue);
+		presentationQueuePtr_ = (presentationQueuePtr_ + 1) % info.maxQueues;
+		printf("GraphicsManager::getPresentationQueue()\n");
+		return queue;
+	}
+
 
 	Context* GraphicsManager::createContext(GLFWwindow* window)
 	{
@@ -57,7 +79,7 @@ namespace NovaEngine::Graphics
 
 		size_t index = contexts_.size();
 		contexts_.push_back(Context());
-		contexts_[index].initialize(this, window, surface, nullptr);
+		contexts_[index].initialize(this, window, getGraphicsQueue(), getPresentationQueue(), surface, nullptr);
 		return &contexts_[index];
 	}
 };
