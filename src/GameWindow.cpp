@@ -55,9 +55,9 @@ namespace NovaEngine
 		}
 	}
 
-	bool GameWindow::isOpen()
+	bool GameWindow::isClosed()
 	{
-		return !glfwWindowShouldClose(window_);
+		return glfwWindowShouldClose(window_);
 	}
 
 	void GameWindow::show()
@@ -66,7 +66,7 @@ namespace NovaEngine
 			glfwShowWindow(window_);
 	}
 
-	void GameWindow::close()
+	void GameWindow::destroy()
 	{
 		if (window_ != nullptr)
 		{

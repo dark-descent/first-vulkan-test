@@ -240,9 +240,16 @@ namespace NovaEngine
 	}
 
 	size_t frames = 0;
+	GameWindow* win2 = nullptr;
 
 	JOB(pollEvents)
 	{
+		if(win2 != nullptr && win2->isClosed())
+		{
+			win2->destroy();
+			win2 = nullptr;
+		}
+
 		glfwPollEvents();
 		scheduler->runJob(pollEvents);
 		JOB_RETURN;
@@ -271,6 +278,10 @@ namespace NovaEngine
 
 			isRunning_ = true;
 
+			win2 = new GameWindow(this);
+			win2->create("test win 2", configManager.getConfig()->window);
+			win2->show();
+
 			JobSystem::JobInfo jobs[2] = {
 				{ pollEvents },
 				{ engineLoop }
@@ -278,9 +289,11 @@ namespace NovaEngine
 
 			jobScheduler.runJobs(jobs, 2);
 
-			jobScheduler.exec([&] { return gameWindow.isOpen(); }, [&] {
+			jobScheduler.exec([&] { return !gameWindow.isClosed(); }, [&] {
 				// callback for each loop iteration
 			});
+
+			gameWindow.destroy();
 
 			isRunning_ = false;
 		}

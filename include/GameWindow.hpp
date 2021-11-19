@@ -24,11 +24,11 @@ namespace NovaEngine
 		/** @returns true if the game window went into fullscreen mode */
 		bool toggleFullScreen();
 
-		bool isOpen();
+		bool isClosed();
 
 		void show();
 
-		void close();
+		void destroy();
 
 		GLFWwindow* glfwWindow();
 

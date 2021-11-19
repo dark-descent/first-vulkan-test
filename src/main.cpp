@@ -3,11 +3,6 @@
 #include "framework.hpp"
 #include "Logger.hpp"
 
-void testFunc()
-{
-	printf("test func :D");
-}
-
 int main(int argc, const char** argv)
 {
 	using namespace NovaEngine;
@@ -16,7 +11,7 @@ int main(int argc, const char** argv)
 
 	if(!engine.initialize("Game.js"))
 		return 1;
-		
+
 	engine.run();
 
 	if(!engine.terminate())
