@@ -186,14 +186,11 @@ namespace NovaEngine::Graphics
 				if(vSyncEnabled)
 				{
 					if(availablePresentMode == VK_PRESENT_MODE_FIFO_KHR)
-					{
-						printf("choose present mode %lu\n", availablePresentMode);
 						return availablePresentMode;
-					}
+					
 				}
 				else if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR)
 				{
-					printf("choose present mode %lu\n", availablePresentMode);
 					return availablePresentMode;
 				}
 			}
