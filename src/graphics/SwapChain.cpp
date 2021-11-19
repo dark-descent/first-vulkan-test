@@ -10,8 +10,10 @@ namespace NovaEngine::Graphics
 
 	bool SwapChain::onInitialize(Context* context, SwapChainOptions* options)
 	{
-		if(options == nullptr)
+		if (options == nullptr)
 			options = &defaultOptions;
+
+		options_ = *options;
 
 		context_ = context;
 
@@ -19,15 +21,17 @@ namespace NovaEngine::Graphics
 
 		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(context_->physicalDevice_, context_->surface_, &ssd.capabilities);
 
-		presentMode_ = VkUtils::chooseSwapPresentMode(ssd.presentModes);
+		presentMode_ = VkUtils::chooseSwapPresentMode(ssd.presentModes, options_.vSyncEnabled);
+
+		printf(options_.vSyncEnabled ? "vsync enable\n" : "vsync disabled\n");
+
 		extent_ = VkUtils::chooseSwapExtent(ssd.capabilities, context_->window_);
 
-		if(options->maxFrames < ssd.capabilities.minImageCount)
+		if (options_.minFrames < ssd.capabilities.minImageCount)
 			imageCount_ = ssd.capabilities.minImageCount;
 		else
-			imageCount_ = options->maxFrames;
+			imageCount_ = options_.minFrames;
 
-		printf("set image count to %u\n", imageCount_);
 
 		if (ssd.capabilities.maxImageCount > 0 && imageCount_ > ssd.capabilities.maxImageCount)
 			imageCount_ = ssd.capabilities.maxImageCount;
@@ -41,11 +45,11 @@ namespace NovaEngine::Graphics
 		createInfo_.imageArrayLayers = 1;
 		createInfo_.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-		QueueFamilies* queueFamilies = context_->queueFamilies_;
+		QueueFamilies& queueFamilies = context_->queueFamilies_;
 
-		uint32_t queueFamilyIndices[] = { queueFamilies->graphics.value().index, queueFamilies->present.value().index, };
-		
-		if (queueFamilies->graphics.value().index != queueFamilies->present.value().index)
+		uint32_t queueFamilyIndices[] = { queueFamilies.graphics.value().index, queueFamilies.present.value().index, };
+
+		if (queueFamilies.graphics.value().index != queueFamilies.present.value().index)
 		{
 			createInfo_.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
 			createInfo_.queueFamilyIndexCount = 2;
@@ -107,11 +111,14 @@ namespace NovaEngine::Graphics
 	{
 		const bool recreate = swapChain_ != VK_NULL_HANDLE;
 
+		if(options != nullptr)
+			options_ = *options;
+
 		SwapChainSupportDetails& ssd = context_->swapChainSupportDetails_;
-		
+
 		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(context_->physicalDevice_, context_->surface_, &ssd.capabilities);
 
-		presentMode_ = VkUtils::chooseSwapPresentMode(ssd.presentModes);
+		presentMode_ = VkUtils::chooseSwapPresentMode(ssd.presentModes, options_.vSyncEnabled);
 		extent_ = ssd.capabilities.currentExtent;
 
 		createInfo_.imageExtent = extent_;
@@ -119,11 +126,11 @@ namespace NovaEngine::Graphics
 		createInfo_.oldSwapchain = swapChain_;
 
 		VkDevice& device = context_->device_;
-		
+
 		if (recreate)
 		{
 			Logger::get()->info("Recreating swapchain...");
-			
+
 			VkSwapchainKHR oldSwapChain = swapChain_;
 
 			if (vkCreateSwapchainKHR(device, &createInfo_, nullptr, &swapChain_) != VK_SUCCESS)
@@ -135,12 +142,13 @@ namespace NovaEngine::Graphics
 		{
 			if (vkCreateSwapchainKHR(device, &createInfo_, nullptr, &swapChain_) != VK_SUCCESS)
 				throw std::runtime_error("failed to create swap chain!");
+
+			vkGetSwapchainImagesKHR(device, swapChain_, &imageCount_, nullptr);
+			images_.resize(imageCount_);
+			imageViews_.resize(imageCount_);
 		}
 
-		vkGetSwapchainImagesKHR(device, swapChain_, &imageCount_, nullptr);
-		images_.resize(imageCount_);
 		vkGetSwapchainImagesKHR(device, swapChain_, &imageCount_, images_.data());
-		imageViews_.resize(imageCount_);
 
 		for (size_t i = 0; i < imageCount_; i++)
 		{

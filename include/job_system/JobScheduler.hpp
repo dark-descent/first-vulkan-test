@@ -55,7 +55,9 @@ namespace NovaEngine::JobSystem
 			threads_(),
 			mainThreadID_(std::this_thread::get_id()),
 			threadsRunning_()
-		{ threadsRunning_.store(0); }
+		{
+			threadsRunning_.store(0);
+		}
 
 	protected:
 		bool onInitialize(size_t maxJobs, size_t executionThreads);
@@ -69,13 +71,22 @@ namespace NovaEngine::JobSystem
 		Counter* runJob(JobInfo jobs);
 		Counter* runJob(JobFunction func);
 
+		void execNext()
+		{
+			JobHandle jobHandle;
+			if (runNextJob(&jobHandle))
+				handleJobYield(&jobHandle);
+		}
+
 		template<typename LoopConditionCallback, typename LoopCallback>
 		void exec(LoopConditionCallback shouldLoop, LoopCallback loopCallback = []() {})
 		{
 			if (mainThreadID_ != std::this_thread::get_id())
 				throw std::runtime_error("Cannot call JobScheduler::exec() from another thread than the main thread!");
 
-			if (threadsRunning_.load() == 0)
+			bool didStartThreads = threadsRunning_.load() == 0;
+
+			if (didStartThreads)
 				execThreads();
 
 			JobHandle jobHandle;
@@ -87,6 +98,8 @@ namespace NovaEngine::JobSystem
 				loopCallback();
 			}
 
+			if (didStartThreads)
+				stopThreads();
 		}
 
 		void execThreads();

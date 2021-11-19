@@ -12,7 +12,7 @@ namespace NovaEngine::Graphics
 	struct SwapChainOptions
 	{
 		bool vSyncEnabled = false;
-		size_t maxFrames = 3;
+		size_t minFrames = 3;
 	};
 
 	struct SwapChainSupportDetails
@@ -37,6 +37,8 @@ namespace NovaEngine::Graphics
 
 		VkSwapchainCreateInfoKHR createInfo_;
 		VkImageViewCreateInfo imageViewCreateInfo_;
+
+		SwapChainOptions options_;
 
 		void createFrameBuffers();
 		void destroyFrameBuffers();

@@ -1,5 +1,6 @@
 #include "Engine.hpp"
 #include "Logger.hpp"
+#include "graphics/Color.hpp"
 
 #define CHECK_REJECT(subSystem, rejector, msg) if(!subSystem) { rejector(msg); Logger::get()->error(#subSystem ":" #rejector " -> " msg); return false; }
 
@@ -70,8 +71,8 @@ namespace NovaEngine
 		SCRIPT_METHOD(onEngineStart)
 		{
 			Engine* engine = ScriptManager::fetchEngineFromArgs(args);
-			engine->start();
 			Logger::get()->info("on engine start called!");
+			engine->start();
 		}
 
 		SCRIPT_METHOD(onShowWindow)
@@ -101,6 +102,8 @@ namespace NovaEngine
 #pragma endregion
 
 	char Engine::executablePath_[PATH_MAX];
+
+	GameWindow* testW = nullptr;
 
 	Engine::Engine() : AbstractObject(),
 		isRunning_(false),
@@ -168,15 +171,30 @@ namespace NovaEngine
 
 		CHECK_REJECT(gameWindow.create(configManager.getConfig()->name.c_str(), configManager.getConfig()->window), rejectGameConfig, "Could not create Game Window!");
 
-		Graphics::GraphicsConfig config = {
-			
-		};
+		Graphics::GraphicsConfig config = {};
 
 		CHECK_REJECT(initSubSystem("Graphics Manager", &graphicsManager, &config), rejectGameConfig, "Could not create graphics stack!");
 
 		CHECK_REJECT(jobScheduler.initialize(10000, std::thread::hardware_concurrency() - 1), rejectGameConfig, "Could not initialize Job System!");
 
-		ctx = graphicsManager.createContext(gameWindow.glfwWindow());
+		Graphics::SwapChainOptions scOptions = {
+			.vSyncEnabled = true,
+			.minFrames = 3,
+		};
+
+		Graphics::ContextOptions o = {
+			.swapChainOptions = &scOptions,
+			.clearColor = Graphics::Color(0.0f, 0.05f, 0.05f)
+		};
+
+		ctx = graphicsManager.createContext(gameWindow.glfwWindow(), &o);
+
+
+
+		Graphics::ContextOptions o2 = {
+			.swapChainOptions = &scOptions,
+			.clearColor = Graphics::Color(0.5f, 0.05f, 0.05f)
+		};
 
 		return true;
 	}
@@ -221,20 +239,29 @@ namespace NovaEngine
 		return isRunning_;
 	}
 
-	JOB(engineLoop)
+	size_t frames = 0;
+
+	JOB(pollEvents)
 	{
 		glfwPollEvents();
-		// ctx->record(0, [](const VkCommandBuffer& buf)
-		// {
-
-		// });
-		ctx->present();
-		// engine->graphicsManager.draw();
-
-		scheduler->runJob(engineLoop);
-		
+		scheduler->runJob(pollEvents);
 		JOB_RETURN;
 	}
+
+	JOB(engineLoop)
+	{
+		ctx->present([&]() {
+			// when vsyn is on we can wait before we acquire the next image
+			// this callback will be called every time the swapchain is not ready yet
+			scheduler->execNext(); // lets execute the next job in the queue in the meanwhile 
+		});
+
+		scheduler->runJob(engineLoop);
+
+		std::cout << frames++ << std::endl;
+		JOB_RETURN;
+	}
+
 
 	void Engine::start()
 	{
@@ -244,7 +271,12 @@ namespace NovaEngine
 
 			isRunning_ = true;
 
-			jobScheduler.runJob(engineLoop);
+			JobSystem::JobInfo jobs[2] = {
+				{ pollEvents },
+				{ engineLoop }
+			};
+
+			jobScheduler.runJobs(jobs, 2);
 
 			jobScheduler.exec([&] { return gameWindow.isOpen(); }, [&] {
 				// callback for each loop iteration

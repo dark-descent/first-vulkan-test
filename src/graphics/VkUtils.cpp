@@ -179,12 +179,23 @@ namespace NovaEngine::Graphics
 			return availableFormats[0];
 		}
 
-		VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes)
+		VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes, bool vSyncEnabled)
 		{
 			for (const auto& availablePresentMode : availablePresentModes)
 			{
-				if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR)
+				if(vSyncEnabled)
+				{
+					if(availablePresentMode == VK_PRESENT_MODE_FIFO_KHR)
+					{
+						printf("choose present mode %lu\n", availablePresentMode);
+						return availablePresentMode;
+					}
+				}
+				else if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR)
+				{
+					printf("choose present mode %lu\n", availablePresentMode);
 					return availablePresentMode;
+				}
 			}
 
 			return VK_PRESENT_MODE_FIFO_KHR;

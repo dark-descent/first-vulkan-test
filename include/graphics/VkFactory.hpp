@@ -16,6 +16,7 @@ namespace NovaEngine::Graphics
 		std::vector<VkCommandBuffer> buffers;
 
 		std::vector<VkSemaphore> imageAvailableSemaphores;
+		std::vector<VkFence> imageAvailableFences;
 		std::vector<VkSemaphore> renderFinishedSemaphores;
 
 		std::vector<VkFence> inFlightFences;
@@ -26,6 +27,7 @@ namespace NovaEngine::Graphics
 			device_(device),
 			buffers(),
 			imageAvailableSemaphores(),
+			imageAvailableFences(),
 			renderFinishedSemaphores(),
 			inFlightFences(),
 			imagesInFlight(),
@@ -37,6 +39,7 @@ namespace NovaEngine::Graphics
 			device_ = other.device_;
 			buffers = other.buffers;
 			imageAvailableSemaphores = other.imageAvailableSemaphores;
+			imageAvailableFences = other.imageAvailableFences;
 			renderFinishedSemaphores = other.renderFinishedSemaphores;
 			inFlightFences = other.inFlightFences;
 			imagesInFlight = other.imagesInFlight;

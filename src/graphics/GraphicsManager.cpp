@@ -67,7 +67,7 @@ namespace NovaEngine::Graphics
 	}
 
 
-	Context* GraphicsManager::createContext(GLFWwindow* window)
+	Context* GraphicsManager::createContext(GLFWwindow* window, NovaEngine::Graphics::ContextOptions *options)
 	{
 		VkSurfaceKHR surface = VK_NULL_HANDLE;
 		if (!isDeviceInitialized_)
@@ -79,7 +79,7 @@ namespace NovaEngine::Graphics
 
 		size_t index = contexts_.size();
 		contexts_.push_back(Context());
-		contexts_[index].initialize(this, window, getGraphicsQueue(), getPresentationQueue(), surface, nullptr);
+		contexts_[index].initialize(this, window, getGraphicsQueue(), getPresentationQueue(), surface, options);
 		return &contexts_[index];
 	}
 };

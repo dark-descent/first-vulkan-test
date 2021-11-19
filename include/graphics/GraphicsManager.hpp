@@ -57,7 +57,7 @@ namespace NovaEngine::Graphics
 		bool onInitialize(GraphicsConfig* config);
 		bool onTerminate();
 
-		Context* createContext(GLFWwindow* window);
+		Context* createContext(GLFWwindow* window, NovaEngine::Graphics::ContextOptions *options = nullptr);
 
 		friend class Context;
 		friend class SwapChain;

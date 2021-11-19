@@ -5,6 +5,7 @@
 
 namespace NovaEngine
 {
+	GameWindow* GameWindow::firstWindow_ = nullptr;
 	bool GameWindow::isGlfwInitialized_ = false;
 
 	GameWindow::GameWindow(Engine* engine) : engine_(engine), window_(nullptr)
@@ -39,6 +40,9 @@ namespace NovaEngine
 				return false;
 			}
 
+			if(firstWindow_ == nullptr)
+				firstWindow_ = this;
+
 			glfwSetWindowSizeLimits(window_, config.minWidth, config.minHeight, config.maxHeight, config.maxHeight);
 			glfwSwapInterval(1);
 
@@ -68,6 +72,7 @@ namespace NovaEngine
 		{
 			Logger::get()->info("window::close()...");
 			glfwDestroyWindow(window_);
+			window_ = nullptr;
 		}
 	}
 

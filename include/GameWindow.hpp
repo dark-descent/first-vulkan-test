@@ -12,6 +12,7 @@ namespace NovaEngine
 	class GameWindow
 	{
 		static bool isGlfwInitialized_;
+		static GameWindow* firstWindow_;
 
 		GameWindow(Engine* engine);
 	

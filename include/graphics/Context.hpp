@@ -6,21 +6,30 @@
 #include "Initializable.hpp"
 #include "graphics/VkUtils.hpp"
 #include "graphics/VkFactory.hpp"
+#include "graphics/Color.hpp"
 
 namespace NovaEngine::Graphics
 {
 	class SyncObjects;
 	class GraphicsManager;
 
-	class Context : public Initializable<GraphicsManager*, GLFWwindow*, VkQueue, VkQueue, VkSurfaceKHR, SwapChainOptions*>
+	struct ContextOptions
+	{
+		SwapChainOptions* swapChainOptions = nullptr;
+		Color clearColor;
+	};
+
+	class Context : public Initializable<GraphicsManager*, GLFWwindow*, VkQueue, VkQueue, VkSurfaceKHR, ContextOptions*>
 	{
 		static void onFrameBufferResizedCallback(GLFWwindow* window, int width, int height);
+
+		static ContextOptions defaultOptions;
 
 		GraphicsManager* manager_;
 		VkInstance instance_;
 		VkPhysicalDevice physicalDevice_;
 		VkDevice device_;
-		QueueFamilies* queueFamilies_;
+		QueueFamilies queueFamilies_;
 		GLFWwindow* window_;
 		VkSurfaceKHR surface_;
 		SwapChainSupportDetails swapChainSupportDetails_;
@@ -33,9 +42,11 @@ namespace NovaEngine::Graphics
 		std::vector<VkCommandBuffer> commandBuffers_;
 		SyncObjects syncObjects_;
 		bool didResize_;
+		size_t currentFrame_;
+		Color clearColor_;
 
 	protected:
-		bool onInitialize(GraphicsManager* manager, GLFWwindow* window, VkQueue graphicsQueue, VkQueue presentQueue, VkSurfaceKHR surface = VK_NULL_HANDLE, SwapChainOptions* options = nullptr);
+		bool onInitialize(GraphicsManager* manager, GLFWwindow* window, VkQueue graphicsQueue, VkQueue presentQueue, VkSurfaceKHR surface = VK_NULL_HANDLE, ContextOptions* options = nullptr);
 
 	public:
 		Context() : Initializable(),
@@ -43,7 +54,7 @@ namespace NovaEngine::Graphics
 			instance_(VK_NULL_HANDLE),
 			physicalDevice_(VK_NULL_HANDLE),
 			device_(VK_NULL_HANDLE),
-			queueFamilies_(nullptr),
+			queueFamilies_(),
 			window_(nullptr),
 			surface_(VK_NULL_HANDLE),
 			swapChainSupportDetails_(),
@@ -55,7 +66,9 @@ namespace NovaEngine::Graphics
 			commandPool_(VK_NULL_HANDLE),
 			commandBuffers_(),
 			syncObjects_(device_),
-			didResize_(false)
+			didResize_(false),
+			currentFrame_(0),
+			clearColor_()
 		{}
 
 		GLFWwindow* window() { return window_; }
@@ -77,7 +90,7 @@ namespace NovaEngine::Graphics
 			if (vkBeginCommandBuffer(buf, &beginInfo) != VK_SUCCESS)
 				throw std::runtime_error("failed to begin recording command buffer!");
 
-			VkClearValue clearColor = { { { 1.0f, 0.0f, 0.0f, 1.0f } } };
+			VkClearValue clearColor = { { clearColor_.getVkColor() } };
 			VkRenderPassBeginInfo renderPassInfo = {};
 			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 			renderPassInfo.renderPass = renderPass_;
@@ -120,7 +133,108 @@ namespace NovaEngine::Graphics
 				throw std::runtime_error("failed to record command buffer!");
 		}
 
-		void present();
+		template<typename WaitCallback>
+		void present(WaitCallback onWaitCallback)
+		{
+			vkWaitForFences(device_, 1, &syncObjects_.inFlightFences[currentFrame_], VK_TRUE, UINT64_MAX);
+
+			vkResetFences(device_, 1, &syncObjects_.imageAvailableFences[currentFrame_]);
+
+			uint32_t imageIndex;
+			VkResult result = vkAcquireNextImageKHR(device_, swapChain_.get(), UINT64_MAX, syncObjects_.imageAvailableSemaphores[currentFrame_], syncObjects_.imageAvailableFences[currentFrame_], &imageIndex);
+
+			VkResult fenceResult = vkGetFenceStatus(device_, syncObjects_.imageAvailableFences[currentFrame_]);
+
+			if (fenceResult == VK_SUCCESS)
+			{
+				printf("okiiii :D...\n");
+			}
+			else if (fenceResult == VK_NOT_READY)
+			{
+				printf("not ready\n");
+				while (fenceResult == VK_NOT_READY)
+				{
+					if(didResize_)
+					{
+						resizeSwapchain();
+						return;
+					}
+
+					onWaitCallback();
+					
+					fenceResult = vkGetFenceStatus(device_, syncObjects_.imageAvailableFences[currentFrame_]);
+				}
+				printf(" ready!\n");
+			}
+
+			if (result == VK_ERROR_OUT_OF_DATE_KHR)
+			{
+				resizeSwapchain();
+				return;
+			}
+			else if (result != VK_SUCCESS)
+			{
+				throw std::runtime_error("Failed to aquire next image from swapchain!");
+			}
+
+			if (syncObjects_.imagesInFlight[imageIndex] != VK_NULL_HANDLE)
+				vkWaitForFences(device_, 1, &syncObjects_.imagesInFlight[imageIndex], VK_TRUE, UINT64_MAX);
+
+			syncObjects_.imagesInFlight[imageIndex] = syncObjects_.inFlightFences[currentFrame_];
+
+			VkSubmitInfo submitInfo{};
+			submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+			VkSemaphore waitSemaphores[] = { syncObjects_.imageAvailableSemaphores[currentFrame_] };
+			VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+			submitInfo.waitSemaphoreCount = 1;
+			submitInfo.pWaitSemaphores = waitSemaphores;
+			submitInfo.pWaitDstStageMask = waitStages;
+
+			submitInfo.commandBufferCount = 1;
+			submitInfo.pCommandBuffers = &commandBuffers_[imageIndex];
+
+			VkSemaphore signalSemaphores[] = { syncObjects_.renderFinishedSemaphores[currentFrame_] };
+			submitInfo.signalSemaphoreCount = 1;
+			submitInfo.pSignalSemaphores = signalSemaphores;
+
+			vkResetFences(device_, 1, &syncObjects_.inFlightFences[currentFrame_]);
+
+			record(imageIndex, [](VkCommandBuffer) {});
+
+			if (vkQueueSubmit(graphicsQueue_, 1, &submitInfo, syncObjects_.inFlightFences[currentFrame_]) != VK_SUCCESS)
+				throw std::runtime_error("failed to submit draw command buffer!");
+
+			VkPresentInfoKHR presentInfo = {};
+			presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+
+			presentInfo.waitSemaphoreCount = 1;
+			presentInfo.pWaitSemaphores = signalSemaphores;
+
+			VkSwapchainKHR swapChains[] = { swapChain_.get() };
+			presentInfo.swapchainCount = 1;
+			presentInfo.pSwapchains = swapChains;
+
+			presentInfo.pImageIndices = &imageIndex;
+
+			result = vkQueuePresentKHR(presentQueue_, &presentInfo);
+
+			if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || didResize_)
+			{
+				resizeSwapchain();
+				didResize_ = false;
+				present(onWaitCallback);
+			}
+			else if (result != VK_SUCCESS)
+				throw std::runtime_error("failed to present swap chain image!");
+
+			currentFrame_ = (currentFrame_ + 1) % syncObjects_.maxFramesInFlight;
+		}
+
+		void present()
+		{
+			present([](){});
+		}
 
 		friend class GraphicsManager;
 		friend class SwapChain;
