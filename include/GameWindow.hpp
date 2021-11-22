@@ -25,6 +25,7 @@ namespace NovaEngine
 		bool toggleFullScreen();
 
 		bool isClosed();
+		bool shouldClose();
 
 		void show();
 

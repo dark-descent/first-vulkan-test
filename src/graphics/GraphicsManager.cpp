@@ -28,7 +28,7 @@ namespace NovaEngine::Graphics
 	{
 		for (size_t i = 0; i < contexts_.size(); i++)
 		{
-			if(contexts_[i] != nullptr)
+			if (contexts_[i] != nullptr)
 			{
 				contexts_[i]->destroy();
 				contexts_[i] = nullptr;
@@ -57,5 +57,14 @@ namespace NovaEngine::Graphics
 				contexts_[i]->destroy();
 				contexts_[i] = nullptr;
 			}
+	}
+
+	Context* GraphicsManager::getContextFromWindow(GameWindow* window)
+	{
+		GLFWwindow* w = window->glfwWindow();
+		for (const auto& ctx : contexts_)
+			if (ctx != nullptr && ctx->window_ == w)
+				return ctx;
+		return nullptr;
 	}
 };

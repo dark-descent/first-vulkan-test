@@ -247,33 +247,28 @@ namespace NovaEngine
 
 	JOB(engineLoop)
 	{
-		ctx->present([&]() {
-			// when vsyn is on we can wait before we acquire the next image
-			// this callback will be called every time the swapchain is not ready yet
-			scheduler->execNext(); // lets execute the next job in the queue in the meanwhile 
-		});
+		GameWindow* w = static_cast<GameWindow*>(arg);
 
-		if (win2 != nullptr)
+		ctx = engine->graphicsManager.getContextFromWindow(w);
+
+		if (w->shouldClose())
 		{
-			if (win2->isClosed())
-			{
-				engine->graphicsManager.destroyContext(ctx2);
-				win2->destroy();
-				win2 = nullptr;
-			}
-			else
-			{
-				ctx2->present([&]() {
-					// when vsyn is on we can wait before we acquire the next image
-					// this callback will be called every time the swapchain is not ready yet
-					scheduler->execNext(); // lets execute the next job in the queue in the meanwhile 
-				});
-			}
+			engine->graphicsManager.destroyContext(ctx);
+			w->destroy();
 		}
+		else
+		{
+			ctx->present([&]() {
+				// when vsyn is on we can wait before we acquire the next image
+				// this callback will be called every time the swapchain is not ready yet
+				scheduler->execNext(); // lets execute the next job in the queue in the meanwhile 
+			});
 
-		scheduler->runJob(engineLoop);
+			scheduler->runJob({ engineLoop, w });
 
-		std::cout << frames++ << std::endl;
+			std::cout << frames++ << std::endl;
+		}
+		
 		JOB_RETURN;
 	}
 
@@ -302,12 +297,13 @@ namespace NovaEngine
 
 			win2->show();
 
-			JobSystem::JobInfo jobs[2] = {
+			JobSystem::JobInfo jobs[3] = {
 				{ pollEvents },
-				{ engineLoop }
+				{ engineLoop, static_cast<void*>(&gameWindow) },
+				{ engineLoop, static_cast<void*>(win2) },
 			};
 
-			jobScheduler.runJobs(jobs, 2);
+			jobScheduler.runJobs(jobs, 3);
 
 			jobScheduler.exec([&] { return !gameWindow.isClosed(); }, [&] {
 				// callback for each loop iteration
