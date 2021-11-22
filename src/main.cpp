@@ -9,12 +9,12 @@ int main(int argc, const char** argv)
 
 	Engine engine;
 
-	if(!engine.initialize("Game.js"))
+	if (!engine.initialize("Game.js"))
 		return 1;
 
 	engine.run();
 
-	if(!engine.terminate())
+	if (!engine.terminate())
 	{
 		Logger::get()->info("oops??");
 		return 2;

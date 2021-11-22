@@ -19,12 +19,13 @@ namespace NovaEngine::Graphics
 		Color clearColor;
 	};
 
-	class Context : public Initializable<GraphicsManager*, GLFWwindow*, VkQueue, VkQueue, VkSurfaceKHR, ContextOptions*>
+	class Context : public Initializable<GraphicsManager*, GLFWwindow*, ContextOptions*>
 	{
 		static void onFrameBufferResizedCallback(GLFWwindow* window, int width, int height);
 
 		static ContextOptions defaultOptions;
 
+		size_t index_;
 		GraphicsManager* manager_;
 		VkInstance instance_;
 		VkPhysicalDevice physicalDevice_;
@@ -46,10 +47,11 @@ namespace NovaEngine::Graphics
 		Color clearColor_;
 
 	protected:
-		bool onInitialize(GraphicsManager* manager, GLFWwindow* window, VkQueue graphicsQueue, VkQueue presentQueue, VkSurfaceKHR surface = VK_NULL_HANDLE, ContextOptions* options = nullptr);
+		bool onInitialize(GraphicsManager* manager, GLFWwindow* window, ContextOptions* options = nullptr);
 
 	public:
-		Context() : Initializable(),
+		Context(size_t index) : Initializable(),
+			index_(index),
 			manager_(nullptr),
 			instance_(VK_NULL_HANDLE),
 			physicalDevice_(VK_NULL_HANDLE),
@@ -78,6 +80,9 @@ namespace NovaEngine::Graphics
 		void resizeSwapchain();
 
 		void destroy();
+
+		VkQueue getGraphicsQueue();
+		VkQueue getPresentationQueue();
 
 		template<typename RecordCallback>
 		void record(uint32_t frameIndex, RecordCallback recordCallback)
@@ -137,7 +142,7 @@ namespace NovaEngine::Graphics
 		void present(WaitCallback onWaitCallback)
 		{
 			vkWaitForFences(device_, 1, &syncObjects_.inFlightFences[currentFrame_], VK_TRUE, UINT64_MAX);
-
+			
 			vkResetFences(device_, 1, &syncObjects_.imageAvailableFences[currentFrame_]);
 
 			uint32_t imageIndex;
@@ -145,26 +150,31 @@ namespace NovaEngine::Graphics
 
 			VkResult fenceResult = vkGetFenceStatus(device_, syncObjects_.imageAvailableFences[currentFrame_]);
 
-			if (fenceResult == VK_SUCCESS)
+			// if (fenceResult == VK_SUCCESS)
+			// {
+			// 	printf("okiiii :D...\n");
+			// }
+			// else 
+			int i = 0;
+			if (fenceResult == VK_NOT_READY)
 			{
-				printf("okiiii :D...\n");
-			}
-			else if (fenceResult == VK_NOT_READY)
-			{
-				printf("not ready\n");
 				while (fenceResult == VK_NOT_READY)
 				{
-					if(didResize_)
+					// printf("wait %i\n", ++i);
+					if (didResize_)
 					{
+						printf("did resize\n");
+						
 						resizeSwapchain();
+						didResize_ = false;
+						vkResetFences(device_, 1, &syncObjects_.imageAvailableFences[currentFrame_]);
 						return;
 					}
 
 					onWaitCallback();
-					
+
 					fenceResult = vkGetFenceStatus(device_, syncObjects_.imageAvailableFences[currentFrame_]);
 				}
-				printf(" ready!\n");
 			}
 
 			if (result == VK_ERROR_OUT_OF_DATE_KHR)
@@ -221,9 +231,10 @@ namespace NovaEngine::Graphics
 
 			if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || didResize_)
 			{
+				printf("did resize 2...\n");
 				resizeSwapchain();
 				didResize_ = false;
-				present(onWaitCallback);
+				// present(onWaitCallback);
 			}
 			else if (result != VK_SUCCESS)
 				throw std::runtime_error("failed to present swap chain image!");
@@ -233,7 +244,7 @@ namespace NovaEngine::Graphics
 
 		void present()
 		{
-			present([](){});
+			present([]() {});
 		}
 
 		friend class GraphicsManager;

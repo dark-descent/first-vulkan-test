@@ -70,7 +70,7 @@ namespace NovaEngine
 	{
 		if (window_ != nullptr)
 		{
-			Logger::get()->info("window::close()...");
+			// Logger::get()->info("window::close()...");
 			glfwDestroyWindow(window_);
 			window_ = nullptr;
 		}

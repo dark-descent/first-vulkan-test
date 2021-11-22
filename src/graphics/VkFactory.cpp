@@ -248,37 +248,12 @@ namespace NovaEngine::Graphics
 			return buffers;
 		}
 
-		SyncObjects createSyncObjects(VkDevice& device, SwapChain& swapchain, size_t maxFramesInFlight)
-		{
-			SyncObjects syncObjects = SyncObjects(device);
+		// SyncObjects createSyncObjects(VkDevice& device, SwapChain& swapchain, size_t maxFramesInFlight)
+		// {
+		// 	SyncObjects syncObjects = SyncObjects(device);
 
-			syncObjects.imageAvailableSemaphores.resize(maxFramesInFlight);
-			syncObjects.imageAvailableFences.resize(maxFramesInFlight);
-			syncObjects.renderFinishedSemaphores.resize(maxFramesInFlight);
-			syncObjects.inFlightFences.resize(maxFramesInFlight);
-			syncObjects.imagesInFlight.resize(swapchain.imageCount(), VK_NULL_HANDLE);
-
-			VkSemaphoreCreateInfo semaphoreInfo{};
-
-			semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-			// semaphoreInfo.sType = VK_SEMAPHORE_TYPE_TIMELINE;
-
-			VkFenceCreateInfo fenceInfo{};
-			fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-			fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-
-			for (size_t i = 0; i < maxFramesInFlight; i++)
-			{
-				if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &syncObjects.imageAvailableSemaphores[i]) != VK_SUCCESS ||
-					vkCreateSemaphore(device, &semaphoreInfo, nullptr, &syncObjects.renderFinishedSemaphores[i]) != VK_SUCCESS ||
-					vkCreateFence(device, &fenceInfo, nullptr, &syncObjects.inFlightFences[i]) != VK_SUCCESS ||
-					vkCreateFence(device, &fenceInfo, nullptr, &syncObjects.imageAvailableFences[i]) != VK_SUCCESS)
-					throw std::runtime_error("failed to create synchronization objects for a frame!");
-			}
-
-			syncObjects.maxFramesInFlight = maxFramesInFlight;
-
-			return syncObjects;
-		}
+			
+		// 	return syncObjects;
+		// }
 	}
 }

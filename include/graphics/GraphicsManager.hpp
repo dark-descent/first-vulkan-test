@@ -21,47 +21,24 @@ namespace NovaEngine::Graphics
 
 		VkDebugUtilsMessengerEXT debugExt;
 		VkInstance instance_;
-		VkPhysicalDevice physicalDevice_;
-		VkDevice device_;
-
-		QueueFamilies queueFamilies_;
-
-		std::vector<Context> contexts_;
-		bool isDeviceInitialized_;
-
-		size_t graphicsQueuePtr_;
-		size_t presentationQueuePtr_;
-
-		std::vector<VkQueue> graphicsQueues_;
-		std::vector<VkQueue> presentationQueues_;
+		std::vector<Context*> contexts_;
 
 		ENGINE_SUB_SYSTEM_CTOR(GraphicsManager),
 			debugExt(VK_NULL_HANDLE),
 			instance_(VK_NULL_HANDLE),
-			physicalDevice_(VK_NULL_HANDLE),
-			device_(VK_NULL_HANDLE),
-			queueFamilies_(),
-			contexts_(),
-			isDeviceInitialized_(false),
-			graphicsQueuePtr_(0),
-			presentationQueuePtr_(0),
-			graphicsQueues_(),
-			presentationQueues_()
+			contexts_()
 		{};
-
-		bool initializeDevice(const VkSurfaceKHR& surface);
-		VkQueue getGraphicsQueue();
-		VkQueue getPresentationQueue();
 
 	protected:
 		bool onInitialize(GraphicsConfig* config);
 		bool onTerminate();
 
+	public:
 		Context* createContext(GLFWwindow* window, NovaEngine::Graphics::ContextOptions *options = nullptr);
+		void destroyContext(Context* ctx);
 
 		friend class Context;
 		friend class SwapChain;
-
 	};
 };
 

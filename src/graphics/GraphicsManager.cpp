@@ -16,6 +16,9 @@ namespace NovaEngine::Graphics
 
 	bool GraphicsManager::onInitialize(GraphicsConfig* config)
 	{
+		contexts_.reserve(10);
+		for (size_t i = 0; i < 10; i++)
+			contexts_[i] = nullptr;
 		instance_ = VkFactory::createInstance(defaultLayers, &debugExt);
 
 		return true;
@@ -23,63 +26,36 @@ namespace NovaEngine::Graphics
 
 	bool GraphicsManager::onTerminate()
 	{
-		for (auto& ctx : contexts_)
-			ctx.destroy();
+		for (size_t i = 0; i < contexts_.size(); i++)
+		{
+			if(contexts_[i] != nullptr)
+			{
+				contexts_[i]->destroy();
+				contexts_[i] = nullptr;
+			}
+		}
 		return true;
 	}
 
-	bool GraphicsManager::initializeDevice(const VkSurfaceKHR& surface)
+	Context* GraphicsManager::createContext(GLFWwindow* window, NovaEngine::Graphics::ContextOptions* options)
 	{
-		if (!isDeviceInitialized_ && (surface != VK_NULL_HANDLE))
-		{
-			printf("initialize device...\n");
-			physicalDevice_ = VkFactory::pickPhysicalDevice(instance_, surface, defaultExtensions);
-			printf("find queue families...\n");
-			queueFamilies_ = VkUtils::findQueueFamilies(physicalDevice_, surface);
-			printf("create device...\n");
-			device_ = VkFactory::createDevice(physicalDevice_, queueFamilies_, defaultExtensions, defaultLayers);
-			printf("device created...\n");
-			isDeviceInitialized_ = true;
-
-			return true;
-		}
-		return false;
+		for (size_t i = 0; i < 10; i++)
+			if (contexts_[i] == nullptr)
+			{
+				contexts_.push_back(new Context(i));
+				contexts_[i]->initialize(this, window, options);
+				return contexts_[i];
+			}
+		return nullptr;
 	}
 
-	VkQueue GraphicsManager::getGraphicsQueue()
+	void GraphicsManager::destroyContext(Context* ctx)
 	{
-		QueueFamilies::QueueInfo& info = queueFamilies_.graphics.value();
-		VkQueue queue;
-		vkGetDeviceQueue(device_, info.index, graphicsQueuePtr_, &queue);
-		graphicsQueuePtr_ = (graphicsQueuePtr_ + 1) % info.maxQueues;
-		printf("GraphicsManager::getGraphicsQueue()\n");
-		return queue;
-	}
-
-	VkQueue GraphicsManager::getPresentationQueue()
-	{
-		QueueFamilies::QueueInfo& info = queueFamilies_.present.value();
-		VkQueue queue;
-		vkGetDeviceQueue(device_, info.index, presentationQueuePtr_, &queue);
-		presentationQueuePtr_ = (presentationQueuePtr_ + 1) % info.maxQueues;
-		printf("GraphicsManager::getPresentationQueue()\n");
-		return queue;
-	}
-
-
-	Context* GraphicsManager::createContext(GLFWwindow* window, NovaEngine::Graphics::ContextOptions *options)
-	{
-		VkSurfaceKHR surface = VK_NULL_HANDLE;
-		if (!isDeviceInitialized_)
-		{
-			surface = VkFactory::createSurface(instance_, window);
-			if (!initializeDevice(surface))
-				throw std::runtime_error("Could not create context!");
-		}
-
-		size_t index = contexts_.size();
-		contexts_.push_back(Context());
-		contexts_[index].initialize(this, window, getGraphicsQueue(), getPresentationQueue(), surface, options);
-		return &contexts_[index];
+		for (size_t i = 0; i < 10; i++)
+			if (contexts_[i] == ctx)
+			{
+				contexts_[i]->destroy();
+				contexts_[i] = nullptr;
+			}
 	}
 };

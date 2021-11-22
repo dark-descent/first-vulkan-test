@@ -46,6 +46,7 @@ namespace NovaEngine::JobSystem
 		std::vector<std::thread> threads_;
 		std::thread::id mainThreadID_;
 		std::atomic<int> threadsRunning_;
+		size_t executionThreads_;
 
 		ENGINE_SUB_SYSTEM_CTOR(JobScheduler),
 			maxJobs_(ENGINE_JOB_SYSTEM_MAX_JOBS),
@@ -54,7 +55,8 @@ namespace NovaEngine::JobSystem
 			jobYieldMutex_(),
 			threads_(),
 			mainThreadID_(std::this_thread::get_id()),
-			threadsRunning_()
+			threadsRunning_(),
+			executionThreads_(1)
 		{
 			threadsRunning_.store(0);
 		}
@@ -71,6 +73,8 @@ namespace NovaEngine::JobSystem
 		Counter* runJob(JobInfo jobs);
 		Counter* runJob(JobFunction func);
 
+		void joinThreads();
+
 		void execNext()
 		{
 			JobHandle jobHandle;
@@ -85,9 +89,13 @@ namespace NovaEngine::JobSystem
 				throw std::runtime_error("Cannot call JobScheduler::exec() from another thread than the main thread!");
 
 			bool didStartThreads = threadsRunning_.load() == 0;
+			bool didInitializeThreads = threads_.size() == 0;
+			
+			if (didInitializeThreads)
+				initThreads();
 
 			if (didStartThreads)
-				execThreads();
+				runThreads();
 
 			JobHandle jobHandle;
 
@@ -100,10 +108,15 @@ namespace NovaEngine::JobSystem
 
 			if (didStartThreads)
 				stopThreads();
+
+			if(didInitializeThreads)
+				joinThreads();
 		}
 
-		void execThreads();
+		void initThreads();
+		void runThreads();
 		void stopThreads();
+		void clearThreads();
 	};
 }
 

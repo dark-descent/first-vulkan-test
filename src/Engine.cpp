@@ -6,6 +6,12 @@
 
 namespace NovaEngine
 {
+	size_t frames = 0;
+	GameWindow* win2 = nullptr;
+	Graphics::Context* ctx2 = nullptr;
+
+
+
 #pragma region Scripting Area
 	namespace
 	{
@@ -184,17 +190,10 @@ namespace NovaEngine
 
 		Graphics::ContextOptions o = {
 			.swapChainOptions = &scOptions,
-			.clearColor = Graphics::Color(0.0f, 0.05f, 0.05f)
+			.clearColor = Graphics::Color(0.0f, 0.05f, 0.05f),
 		};
 
 		ctx = graphicsManager.createContext(gameWindow.glfwWindow(), &o);
-
-
-
-		Graphics::ContextOptions o2 = {
-			.swapChainOptions = &scOptions,
-			.clearColor = Graphics::Color(0.5f, 0.05f, 0.05f)
-		};
 
 		return true;
 	}
@@ -239,17 +238,8 @@ namespace NovaEngine
 		return isRunning_;
 	}
 
-	size_t frames = 0;
-	GameWindow* win2 = nullptr;
-
 	JOB(pollEvents)
 	{
-		if(win2 != nullptr && win2->isClosed())
-		{
-			win2->destroy();
-			win2 = nullptr;
-		}
-
 		glfwPollEvents();
 		scheduler->runJob(pollEvents);
 		JOB_RETURN;
@@ -262,6 +252,24 @@ namespace NovaEngine
 			// this callback will be called every time the swapchain is not ready yet
 			scheduler->execNext(); // lets execute the next job in the queue in the meanwhile 
 		});
+
+		if (win2 != nullptr)
+		{
+			if (win2->isClosed())
+			{
+				engine->graphicsManager.destroyContext(ctx2);
+				win2->destroy();
+				win2 = nullptr;
+			}
+			else
+			{
+				ctx2->present([&]() {
+					// when vsyn is on we can wait before we acquire the next image
+					// this callback will be called every time the swapchain is not ready yet
+					scheduler->execNext(); // lets execute the next job in the queue in the meanwhile 
+				});
+			}
+		}
 
 		scheduler->runJob(engineLoop);
 
@@ -280,6 +288,18 @@ namespace NovaEngine
 
 			win2 = new GameWindow(this);
 			win2->create("test win 2", configManager.getConfig()->window);
+
+			Graphics::SwapChainOptions scOptions = {};
+			scOptions.minFrames = 3;
+			scOptions.vSyncEnabled = true;
+
+			Graphics::ContextOptions o2 = {
+				.swapChainOptions = &scOptions,
+				.clearColor = Graphics::Color(0.5f, 0.05f, 0.05f)
+			};
+
+			ctx2 = graphicsManager.createContext(win2->glfwWindow(), &o2);
+
 			win2->show();
 
 			JobSystem::JobInfo jobs[2] = {
@@ -293,7 +313,8 @@ namespace NovaEngine
 				// callback for each loop iteration
 			});
 
-			gameWindow.destroy();
+			// if (win2 != nullptr)
+			// 	win2->destroy();
 
 			isRunning_ = false;
 		}

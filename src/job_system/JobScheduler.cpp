@@ -8,10 +8,7 @@ namespace NovaEngine::JobSystem
 	bool JobScheduler::onInitialize(size_t maxJobs, size_t executionThreads)
 	{
 		maxJobs_ = maxJobs == 0 ? ENGINE_JOB_SYSTEM_MAX_JOBS : maxJobs;
-
-		for (size_t i = 0; i < executionThreads; i++)
-			threads_.push_back(std::thread([&] { threadEntry(threadIdCounter.fetch_add(1, std::memory_order::acq_rel)); }));
-
+		executionThreads_ = executionThreads;
 		return true;
 	}
 
@@ -20,8 +17,7 @@ namespace NovaEngine::JobSystem
 		if (threadsRunning_.load(std::memory_order::acquire) == 1)
 			stopThreads();
 
-		for (std::thread& t : threads_)
-			t.join();
+		joinThreads();
 
 		return true;
 	}
@@ -77,7 +73,7 @@ namespace NovaEngine::JobSystem
 		return runJob({ function, 0 });
 	}
 
-	void JobScheduler::execThreads()
+	void JobScheduler::runThreads()
 	{
 		threadsRunning_.store(1);
 	}
@@ -85,6 +81,20 @@ namespace NovaEngine::JobSystem
 	void JobScheduler::stopThreads()
 	{
 		threadsRunning_.store(0);
+	}
+
+	void JobScheduler::joinThreads()
+	{
+		for (auto& thread : threads_)
+			thread.join();
+		threads_.clear();
+	}
+
+	void JobScheduler::initThreads()
+	{
+		if (threads_.size() == 0)
+			for (size_t i = 0; i < executionThreads_; i++)
+				threads_.push_back(std::thread([&] { threadEntry(threadIdCounter.fetch_add(1, std::memory_order::acq_rel)); }));
 	}
 
 	bool JobScheduler::handleJobYield(JobHandlePtr handle)
@@ -134,7 +144,7 @@ namespace NovaEngine::JobSystem
 						return false;
 					});
 					handle->destroy();
-					
+
 					delete counter;
 				}
 			}
